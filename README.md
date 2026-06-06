@@ -11,22 +11,25 @@ Full-stack procurement and vendor management ERP built with React, Express, Pris
    npm run install:all
    ```
 
-2. Copy `backend/.env.example` to `backend/.env`, then set the PostgreSQL connection URL and a unique random JWT secret:
+2. Copy `backend/.env.example` to `backend/.env`, then set the privately shared hackathon PostgreSQL connection URL and JWT secret:
 
    ```env
-   DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/vendorbridge?schema=public
+   DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DATABASE?schema=public
    JWT_SECRET=replace_with_at_least_32_random_characters
    ```
 
    For hosted PostgreSQL providers, retain any required SSL query parameters from the provider's connection URL.
 
-3. Apply the schema and seed demo data:
+   Every collaborator may use the same shared development database, but the real URL must never be committed.
+
+3. Apply committed migrations:
 
    ```powershell
    cd backend
    npm run prisma:deploy
-   npm run seed
    ```
+
+   Run `npm run seed` only when the team confirms the shared database needs initial demo data.
 
 4. Start both applications from the repository root:
 
@@ -51,6 +54,16 @@ All seeded accounts use password `password123`.
 - `vendor@vendorbridge.com`
 
 Seeded credentials are for development and demos only. Replace or disable them before production use.
+
+## Shared Hackathon Database
+
+- Share the connection URL through a private team channel, not GitHub.
+- Each collaborator stores the same URL in their local ignored `backend/.env`.
+- Designate one teammate as the migration owner.
+- Only the migration owner creates and applies new migrations to the shared database.
+- Other teammates pull the committed migration and use `npm run prisma:deploy --prefix backend`.
+- Coordinate before running the seed script because it changes shared data.
+- Do not reset, drop, truncate, or force-push schema changes against the shared database.
 
 ## Validation
 
