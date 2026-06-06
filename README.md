@@ -29,7 +29,7 @@ Full-stack procurement and vendor management ERP built with React, Express, Pris
    npm run prisma:deploy
    ```
 
-   Run `npm run seed` only when the team confirms the shared database needs initial demo data.
+   Run `npm run seed` only when the team confirms the shared database needs the default admin account.
 
 4. Start both applications from the repository root:
 
@@ -44,16 +44,14 @@ Full-stack procurement and vendor management ERP built with React, Express, Pris
 - Swagger documentation: `http://localhost:5000/api-docs`
 - Health check: `http://localhost:5000/health`
 
-## Demo Accounts
+## Seeded Admin Account
 
-All seeded accounts use password `password123`.
+The seed script only ensures the admin account and role definitions exist. By default, the admin credential is:
 
 - `admin@vendorbridge.com`
-- `procurement@vendorbridge.com`
-- `finance@vendorbridge.com`
-- `vendor@vendorbridge.com`
+- `password123`
 
-Seeded credentials are for development and demos only. Replace or disable them before production use.
+Override this locally with `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` when needed. Replace the default admin password before production use.
 
 ## Shared Hackathon Database
 

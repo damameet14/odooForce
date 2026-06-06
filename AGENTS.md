@@ -18,7 +18,7 @@ The system must preserve a reliable audit trail and strict data isolation betwee
     prisma/
       schema.prisma        Authoritative database model
       migrations/          Committed migration history
-      seed.js              Development/demo seed data
+      seed.js              Admin account and role seed data
     src/
       config/              Database, environment, and Swagger configuration
       controllers/         HTTP request handling and workflow orchestration
@@ -66,7 +66,7 @@ Apply committed migrations:
 npm run prisma:deploy --prefix backend
 ```
 
-Seed the shared development database only after confirming with the team that seeding is required:
+Seed the shared development database only after confirming with the team that the default admin account is required:
 
 ```powershell
 npm run seed --prefix backend
@@ -159,7 +159,7 @@ Public signup may create only `VENDOR` users. Admin and internal officer account
 - Email errors must be captured in `email_logs` without exposing credentials.
 - Do not log password reset tokens, login passwords, Brevo API keys, provider response bodies, or full email payloads containing sensitive data.
 - Use provider-required TLS/SSL options for remote PostgreSQL.
-- Treat the seeded demo accounts and password as development-only data.
+- Treat the seeded default admin password as development-only data and rotate it before production use.
 - Run dependency audits before pushing dependency changes.
 
 If a secret is discovered in Git history or staged files, stop immediately. Remove it from the commit and notify the repository owner so it can be rotated.
@@ -205,7 +205,7 @@ When changing the schema:
    ```
 
 3. Review the generated SQL before committing.
-4. Update `seed.js` if the schema change affects required demo data.
+4. Update `seed.js` if the schema change affects required admin or role seed data.
 5. Run Prisma validation and generate the client.
 6. Commit both the schema change and generated migration.
 
@@ -282,13 +282,12 @@ The seed script must remain idempotent enough for repeated development use.
 
 It should provide:
 
-- Admin, Procurement Officer, Finance Officer, and Vendor demo users
-- Vendor categories and vendors
-- A representative RFQ/quotation/approval/PO/invoice workflow
+- Role definitions
+- The default Admin account only
 
 When adding required schema fields, update seed data in the same change.
 
-Do not add real customer, vendor, or employee data to seed files.
+Do not add demo workflows, demo vendors, real customer, vendor, or employee data to seed files.
 
 ## Dependency Rules
 

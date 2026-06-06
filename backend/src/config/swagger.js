@@ -19,7 +19,7 @@ module.exports = swaggerJsdoc({
           required: ["email", "password"],
           properties: {
             email: { type: "string", example: "admin@vendorbridge.com" },
-            password: { type: "string", example: "password123" },
+            password: { type: "string", example: "your_admin_password" },
           },
         },
         Error: {
@@ -31,4 +31,3 @@ module.exports = swaggerJsdoc({
   },
   apis: ["./src/routes/*.js"],
 });
-
