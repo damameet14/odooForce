@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OF Logo Loader</title>
+  <style>
+    :root {
+      --bg: #070707;
+      --bg-glow: radial-gradient(circle at center, rgba(229, 9, 20, .16), transparent 58%);
+      --red: #e50914;
+      --deep-red: #8b0007;
+      --line-red: #ff4d57;
+      --line-dark: #c20b14;
+      --size: min(42vw, 220px);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: var(--bg);
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .loader-shell {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 100vw;
+      height: 100vh;
+      background: var(--bg);
+      isolation: isolate;
+    }
+
+    .loader-shell::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: var(--bg-glow);
+      opacity: .9;
+      pointer-events: none;
+    }
+
+    .loader {
+      position: relative;
+      z-index: 1;
+      width: var(--size);
+      aspect-ratio: 1;
+      overflow: visible;
+      filter: drop-shadow(0 0 22px rgba(229, 9, 20, .14));
+    }
+
+    .logo-base path {
+      fill: var(--red);
+      opacity: .18;
+      animation: logoPulse 3.2s ease-in-out infinite;
+    }
+
+    .logo-lines .piece {
+      fill: none;
+      stroke: var(--line-red);
+      stroke-linecap: round;
+      stroke-linejoin: miter;
+      stroke-width: 5;
+      stroke-dasharray: 100;
+      stroke-dashoffset: 100;
+      opacity: 0;
+      transform-box: fill-box;
+      transform-origin: center;
+      animation-duration: 3.2s;
+      animation-iteration-count: infinite;
+      animation-timing-function: cubic-bezier(.65, 0, .35, 1);
+      filter: drop-shadow(0 0 8px rgba(229, 9, 20, .35));
+    }
+
+    .logo-lines .top-left {
+      animation-name: drawTopLeft;
+    }
+
+    .logo-lines .o-piece {
+      animation-name: drawOPiece;
+    }
+
+    .logo-lines .top-right {
+      animation-name: drawTopRight;
+    }
+
+    .logo-lines .f-piece {
+      animation-name: drawFPiece;
+    }
+
+    .logo-lines .top-left,
+    .logo-lines .top-right {
+      stroke: var(--line-dark);
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+    }
+
+    @keyframes logoPulse {
+      0%,
+      100% {
+        opacity: .08;
+      }
+
+      22%,
+      84% {
+        opacity: .26;
+      }
+    }
+
+    @keyframes drawTopLeft {
+      0% {
+        stroke-dashoffset: 100;
+        opacity: 0;
+      }
+
+      4% {
+        opacity: 1;
+      }
+
+      20%,
+      88% {
+        stroke-dashoffset: 0;
+        opacity: 1;
+      }
+
+      100% {
+        stroke-dashoffset: 0;
+        opacity: 0;
+      }
+    }
+
+    @keyframes drawOPiece {
+      0%,
+      16% {
+        stroke-dashoffset: 100;
+        opacity: 0;
+      }
+
+      20% {
+        opacity: 1;
+      }
+
+      44%,
+      88% {
+        stroke-dashoffset: 0;
+        opacity: 1;
+      }
+
+      100% {
+        stroke-dashoffset: 0;
+        opacity: 0;
+      }
+    }
+
+    @keyframes drawTopRight {
+      0%,
+      40% {
+        stroke-dashoffset: 100;
+        opacity: 0;
+      }
+
+      44% {
+        opacity: 1;
+      }
+
+      60%,
+      88% {
+        stroke-dashoffset: 0;
+        opacity: 1;
+      }
+
+      100% {
+        stroke-dashoffset: 0;
+        opacity: 0;
+      }
+    }
+
+    @keyframes drawFPiece {
+      0%,
+      56% {
+        stroke-dashoffset: 100;
+        opacity: 0;
+      }
+
+      60% {
+        opacity: 1;
+      }
+
+      84%,
+      88% {
+        stroke-dashoffset: 0;
+        opacity: 1;
+      }
+
+      100% {
+        stroke-dashoffset: 0;
+        opacity: 0;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="loader-shell" aria-label="Loading">
+    <span class="sr-only">Loading Odoo Force</span>
+
+    <svg class="loader" viewBox="0 0 180 180" role="img" aria-label="OF logo loader">
+      <g class="logo-base" aria-hidden="true">
+        <path class="top-left" d="M114 22 L114 25 L56 58 L27 45 L28 42 L86 14 L97 14 Z"/>
+        <path class="top-right" d="M157 41 L156 45 L98 75 L87 74 L63 62 L64 59 L121 26 Z"/>
+        <path class="o-piece" fill-rule="evenodd" d="M21 53 L30 52 L51 62 L51 77 L57 76 L60 81 L63 68 L89 83 L92 90 L92 163 L88 168 L78 168 L21 137 L18 130 L18 58 Z M73 142 L72 94 L46 80 L36 79 L36 124 L40 129 L66 142 Z"/>
+        <path class="f-piece" d="M165 48 L163 66 L126 84 L121 90 L122 105 L158 87 L159 103 L121 124 L121 158 L102 169 L100 89 L103 81 L115 71 L161 47 Z"/>
+      </g>
+
+      <g class="logo-lines">
+        <path class="piece top-left" pathLength="100" d="M114 22 L114 25 L56 58 L27 45 L28 42 L86 14 L97 14 Z"/>
+        <path class="piece top-right" pathLength="100" d="M157 41 L156 45 L98 75 L87 74 L63 62 L64 59 L121 26 Z"/>
+        <path class="piece o-piece" pathLength="100" d="M21 53 L30 52 L51 62 L51 77 L57 76 L60 81 L63 68 L89 83 L92 90 L92 163 L88 168 L78 168 L21 137 L18 130 L18 58 Z M73 142 L72 94 L46 80 L36 79 L36 124 L40 129 L66 142 Z"/>
+        <path class="piece f-piece" pathLength="100" d="M165 48 L163 66 L126 84 L121 90 L122 105 L158 87 L159 103 L121 124 L121 158 L102 169 L100 89 L103 81 L115 71 L161 47 Z"/>
+      </g>
+    </svg>
+  </main>
+</body>
+</html>

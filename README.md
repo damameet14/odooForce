@@ -2,6 +2,8 @@
 
 Full-stack procurement and vendor management ERP built with React, Express, Prisma, and PostgreSQL.
 
+For a judge-friendly overview of the procurement lifecycle, role boundaries, and audit trail, see [VendorBridge Project Flowchart](FLOWCHART.md).
+
 ## Setup
 
 1. Install dependencies:

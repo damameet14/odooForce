@@ -1,0 +1,1417 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Odoo Force Procurement ERP Redesign</title>
+  <link rel="icon" type="image/png" href="assets/odoo-force-logo.png">
+  <link rel="apple-touch-icon" href="assets/odoo-force-logo.png">
+  <style>
+    :root {
+      --warm-50: #f8f6ef;
+      --warm-100: #eae7dc;
+      --sand-200: #d8c3a5;
+      --stone-500: #8e8d8a;
+      --coral-400: #e98074;
+      --coral-600: #e85a4f;
+      --navy-900: #17233c;
+      --navy-700: #263653;
+      --blue-500: #2878d7;
+      --green-600: #1f8a5b;
+      --amber-500: #c78213;
+      --red-600: #c83d35;
+      --ink-700: #334155;
+      --ink-500: #64748b;
+      --line: #ded8ca;
+      --white: #ffffff;
+      --shadow: 0 16px 38px rgba(23, 35, 60, .1);
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--warm-50);
+      color: var(--navy-900);
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 248px minmax(0, 1fr);
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 18px 16px;
+      background: var(--navy-900);
+      color: #f6f4ee;
+      border-right: 1px solid rgba(255,255,255,.08);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      font-weight: 800;
+      font-size: 19px;
+      letter-spacing: 0;
+    }
+
+    .brand-mark {
+      width: 58px;
+      height: 58px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 12px 26px rgba(0,0,0,.18);
+      overflow: hidden;
+    }
+
+    .brand-logo {
+      width: 100%;
+      height: 100%;
+      padding: 2px;
+      object-fit: contain;
+      display: block;
+      filter: drop-shadow(0 4px 10px rgba(232, 90, 79, .28));
+    }
+
+    .nav-label {
+      margin: 18px 10px 8px;
+      color: rgba(255,255,255,.48);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 10px;
+      border-radius: 8px;
+      color: rgba(255,255,255,.78);
+      font-weight: 650;
+      margin-bottom: 4px;
+    }
+
+    .nav-item:hover, .nav-item.active {
+      background: rgba(255,255,255,.09);
+      color: white;
+    }
+
+    .badge-count {
+      min-width: 22px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(232,90,79,.22);
+      color: #ffd7d3;
+      font-size: 11px;
+      text-align: center;
+    }
+
+    main { min-width: 0; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 24px;
+      background: rgba(248,246,239,.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .search {
+      min-width: 340px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+      color: var(--ink-500);
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      background: var(--white);
+      color: var(--navy-700);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-weight: 750;
+      cursor: default;
+      white-space: nowrap;
+    }
+
+    .btn.primary {
+      border-color: var(--coral-600);
+      background: var(--coral-600);
+      color: white;
+      box-shadow: 0 10px 22px rgba(232,90,79,.2);
+    }
+
+    .btn.ghost { background: transparent; }
+
+    .content {
+      padding: 22px 24px 44px;
+      display: grid;
+      gap: 22px;
+    }
+
+    .page {
+      scroll-margin-top: 84px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .page[hidden] { display: none; }
+
+    .content.loading .page:not([hidden]) { display: none; }
+
+    .skeleton-page {
+      display: none;
+      gap: 14px;
+    }
+
+    .content.loading .skeleton-page { display: grid; }
+
+    .skeleton {
+      position: relative;
+      overflow: hidden;
+      border-radius: 8px;
+      background: #eee8db;
+      border: 1px solid var(--line);
+    }
+
+    .skeleton::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      transform: translateX(-100%);
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.7), transparent);
+      animation: shimmer 1.1s infinite;
+    }
+
+    .skeleton.title { width: min(420px, 80vw); height: 32px; }
+    .skeleton.sub { width: min(560px, 86vw); height: 16px; }
+    .skeleton.kpi-row {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(150px, 1fr));
+      gap: 14px;
+      background: transparent;
+      border: 0;
+    }
+    .skeleton.kpi-row::after { display: none; }
+    .skeleton.kpi { height: 118px; }
+    .skeleton.panel { height: 310px; }
+    .skeleton.table { height: 420px; }
+
+    @keyframes shimmer {
+      100% { transform: translateX(100%); }
+    }
+
+    @keyframes borderGlow {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 220% 50%; }
+    }
+
+    .page-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    h1, h2, h3 { margin: 0; letter-spacing: 0; }
+    h1 { font-size: 24px; line-height: 1.1; }
+    h2 { font-size: 18px; }
+    h3 { font-size: 14px; }
+
+    .muted { color: var(--ink-500); }
+
+    .grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .grid.kpis { grid-template-columns: repeat(6, minmax(150px, 1fr)); }
+    .grid.two { grid-template-columns: 1.35fr .85fr; }
+    .grid.three { grid-template-columns: repeat(3, 1fr); }
+    .grid.four { grid-template-columns: repeat(4, 1fr); }
+    .grid.dashboard-main { grid-template-columns: 1fr; align-items: stretch; }
+    .grid.dashboard-analytics { grid-template-columns: minmax(0, 1.18fr) minmax(360px, .82fr); align-items: stretch; }
+    .grid.dashboard-chart-stack { grid-template-columns: 1fr; align-items: stretch; }
+    .grid.dashboard-ops { grid-template-columns: minmax(0, 1.05fr) minmax(340px, .95fr); align-items: stretch; }
+
+    .card {
+      position: relative;
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      transition: transform .24s ease, box-shadow .24s ease, border-color .24s ease, background-color .24s ease;
+      will-change: transform;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      padding: 1px;
+      border-radius: inherit;
+      background: linear-gradient(120deg, transparent 0%, rgba(232, 90, 79, .18) 18%, var(--coral-600) 42%, var(--coral-400) 58%, rgba(40, 120, 215, .3) 76%, transparent 100%);
+      background-size: 220% 220%;
+      opacity: 0;
+      transition: opacity .24s ease;
+      pointer-events: none;
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+    }
+
+    @media (hover: hover) {
+      .card:hover {
+        transform: translateY(-7px) scale(1.01);
+        border-color: rgba(232, 90, 79, .42);
+        background-color: #fffefa;
+        box-shadow: 0 24px 54px rgba(23, 35, 60, .18);
+      }
+
+      .card:hover::before {
+        opacity: 1;
+        animation: borderGlow 1.45s linear infinite;
+      }
+    }
+
+    .card.pad { padding: 16px; }
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      background: #fffdf9;
+    }
+
+    .kpi {
+      padding: 14px;
+      min-height: 118px;
+      display: grid;
+      align-content: space-between;
+    }
+
+    .kpi .label {
+      color: var(--ink-500);
+      font-size: 12px;
+      font-weight: 750;
+      text-transform: uppercase;
+    }
+
+    .kpi .value {
+      margin-top: 12px;
+      font-size: 25px;
+      font-weight: 850;
+    }
+
+    .delta {
+      color: var(--green-600);
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .delta.warn { color: var(--amber-500); }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      background: var(--warm-50);
+    }
+
+    .field {
+      min-width: 190px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+      color: var(--ink-500);
+      font-weight: 600;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th, td {
+      padding: 11px 14px;
+      border-bottom: 1px solid #ece7dc;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      color: var(--ink-500);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+      background: #fffdf9;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .status.blue { background: #e7f0ff; color: #1d5fa8; }
+    .status.green { background: #e6f5ed; color: var(--green-600); }
+    .status.amber { background: #fff4dd; color: var(--amber-500); }
+    .status.red { background: #ffe8e5; color: var(--red-600); }
+    .status.gray { background: #f0efea; color: #696866; }
+    .status.coral { background: #ffe7e3; color: var(--coral-600); }
+
+    .progress {
+      height: 8px;
+      border-radius: 999px;
+      background: #eee8db;
+      overflow: hidden;
+      min-width: 90px;
+    }
+
+    .progress span {
+      display: block;
+      height: 100%;
+      background: var(--coral-600);
+      border-radius: inherit;
+    }
+
+    .pipeline {
+      padding: 16px;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+    }
+
+    .stage {
+      position: relative;
+      padding: 12px;
+      min-height: 92px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--warm-50);
+    }
+
+    .stage strong { display: block; margin-bottom: 6px; }
+    .stage .count { font-size: 23px; font-weight: 850; }
+
+    .chart {
+      height: 210px;
+      padding: 16px;
+      display: flex;
+      align-items: end;
+      gap: 12px;
+      background:
+        linear-gradient(to top, rgba(222,216,202,.55) 1px, transparent 1px) 0 0 / 100% 42px,
+        #fff;
+    }
+
+    .bar {
+      flex: 1;
+      min-width: 20px;
+      border-radius: 6px 6px 0 0;
+      background: linear-gradient(180deg, var(--coral-400), var(--coral-600));
+    }
+
+    .trendline {
+      height: 210px;
+      padding: 18px;
+      background:
+        linear-gradient(135deg, transparent 0 48%, rgba(40,120,215,.22) 48% 52%, transparent 52%),
+        linear-gradient(to top, rgba(222,216,202,.55) 1px, transparent 1px) 0 0 / 100% 42px,
+        white;
+    }
+
+    .dashboard-chart {
+      min-height: 268px;
+      padding: 14px 16px 16px;
+      display: grid;
+      grid-template-rows: auto 1fr auto auto;
+      gap: 10px;
+      background: linear-gradient(180deg, #fffdf9 0%, #ffffff 46%, #fbfaf6 100%);
+    }
+
+    .chart-stat {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .chart-stat strong {
+      display: block;
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .chart-stat span {
+      color: var(--ink-500);
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .chart-plot {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr);
+      gap: 10px;
+      min-height: 168px;
+    }
+
+    .chart-axis {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: end;
+      padding: 3px 0 1px;
+      color: var(--ink-500);
+      font-size: 10px;
+      font-weight: 750;
+    }
+
+    .chart-canvas {
+      position: relative;
+      overflow: hidden;
+      min-width: 0;
+      border-left: 1px solid #e9e2d5;
+      border-bottom: 1px solid #e9e2d5;
+      border-radius: 8px 8px 4px 4px;
+      background:
+        linear-gradient(to top, rgba(222,216,202,.7) 1px, transparent 1px) 0 0 / 100% 25%,
+        linear-gradient(to right, rgba(222,216,202,.34) 1px, transparent 1px) 0 0 / 16.66% 100%,
+        linear-gradient(180deg, rgba(248,246,239,.28), rgba(255,255,255,.94));
+    }
+
+    .chart-bars {
+      height: 100%;
+      padding: 12px 12px 0;
+      display: flex;
+      align-items: end;
+      gap: 12px;
+    }
+
+    .chart-bar {
+      position: relative;
+      flex: 1;
+      min-width: 22px;
+      border-radius: 7px 7px 0 0;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.42), rgba(255,255,255,0) 38%),
+        linear-gradient(180deg, var(--coral-400), var(--coral-600));
+      box-shadow: 0 10px 18px rgba(232,90,79,.2), inset 0 -10px 18px rgba(23,35,60,.08);
+      transform-origin: bottom;
+    }
+
+    .chart-bar::after {
+      content: attr(data-value);
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 6px);
+      transform: translateX(-50%);
+      color: var(--navy-700);
+      font-size: 10px;
+      font-weight: 800;
+      opacity: .82;
+    }
+
+    .chart-labels {
+      display: flex;
+      justify-content: space-between;
+      color: var(--ink-500);
+      font-size: 11px;
+      font-weight: 750;
+    }
+
+    .area-chart,
+    .line-chart {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .chart-grid-line {
+      stroke: rgba(222,216,202,.85);
+      stroke-width: 1;
+    }
+
+    .area-fill {
+      fill: url(#spendAreaGradient);
+      stroke: none;
+    }
+
+    .area-stroke,
+    .line-stroke {
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 4.5;
+      filter: drop-shadow(0 6px 8px rgba(23,35,60,.12));
+    }
+
+    .area-stroke { stroke: var(--coral-600); }
+    .line-stroke { stroke: var(--blue-500); }
+
+    .chart-point {
+      fill: white;
+      stroke: var(--blue-500);
+      stroke-width: 3;
+      filter: drop-shadow(0 3px 6px rgba(40,120,215,.28));
+    }
+
+    .area-point {
+      fill: white;
+      stroke: var(--coral-600);
+      stroke-width: 3;
+      filter: drop-shadow(0 3px 6px rgba(232,90,79,.22));
+    }
+
+    .chart-feature .dashboard-chart {
+      min-height: 430px;
+    }
+
+    .chart-feature .chart-plot {
+      min-height: 300px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .card,
+      .card::before,
+      .skeleton::after {
+        animation: none;
+        transition: none;
+      }
+
+      .card:hover { transform: none; }
+      .card:hover::before { opacity: 0; }
+    }
+
+    .chart-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--ink-500);
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .chart-legend {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--ink-500);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .legend-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: var(--coral-600);
+      box-shadow: 0 0 0 4px rgba(232,90,79,.12);
+    }
+
+    .legend-dot.blue {
+      background: var(--blue-500);
+      box-shadow: 0 0 0 4px rgba(40,120,215,.12);
+    }
+
+    .report-metrics {
+      grid-template-columns: repeat(4, minmax(160px, 1fr));
+    }
+
+    .report-metric {
+      padding: 14px 16px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .report-metric span {
+      color: var(--ink-500);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .report-metric strong {
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .report-grid {
+      grid-template-columns: minmax(0, 1.25fr) minmax(340px, .75fr);
+      align-items: stretch;
+    }
+
+    .report-split {
+      grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+      align-items: stretch;
+    }
+
+    .funnel-bars {
+      display: grid;
+      gap: 10px;
+      padding: 16px;
+    }
+
+    .funnel-row {
+      display: grid;
+      grid-template-columns: 112px minmax(0, 1fr) 48px;
+      align-items: center;
+      gap: 10px;
+      color: var(--ink-700);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .funnel-track {
+      height: 12px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #eee8db;
+    }
+
+    .funnel-track span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--coral-600), var(--coral-400));
+      box-shadow: 0 6px 14px rgba(232,90,79,.18);
+    }
+
+    .donut-wrap {
+      display: grid;
+      grid-template-columns: 160px minmax(0, 1fr);
+      align-items: center;
+      gap: 18px;
+      padding: 18px;
+    }
+
+    .donut {
+      width: 148px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: conic-gradient(var(--coral-600) 0 38%, var(--blue-500) 38% 64%, var(--green-600) 64% 84%, var(--amber-500) 84% 100%);
+      display: grid;
+      place-items: center;
+      box-shadow: inset 0 0 0 14px rgba(255,255,255,.72), 0 18px 36px rgba(23,35,60,.12);
+    }
+
+    .donut::after {
+      content: "$2.84M";
+      width: 92px;
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: white;
+      color: var(--navy-900);
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .action-grid {
+      padding: 16px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .insight-list {
+      padding: 12px 16px 16px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .insight-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #ece7dc;
+    }
+
+    .insight-row:last-child { border-bottom: 0; }
+
+    .timeline {
+      padding: 10px 16px 16px;
+    }
+
+    .event {
+      display: grid;
+      grid-template-columns: 18px 1fr auto;
+      gap: 10px;
+      padding: 12px 0;
+      border-bottom: 1px solid #ece7dc;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      margin-top: 5px;
+      border-radius: 50%;
+      background: var(--coral-600);
+    }
+
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 260px repeat(3, 1fr);
+      gap: 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .compare-cell {
+      padding: 14px;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      background: white;
+    }
+
+    .compare-cell.label {
+      background: var(--warm-50);
+      color: var(--ink-500);
+      font-weight: 800;
+    }
+
+    .compare-cell.best {
+      background: #e6f5ed;
+      box-shadow: inset 3px 0 0 var(--green-600);
+    }
+
+    .recommendation {
+      border-left: 4px solid var(--coral-600);
+      background: #fff7f4;
+    }
+
+    .workflow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 16px;
+      overflow-x: auto;
+    }
+
+    .workflow-step {
+      min-width: 132px;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: white;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .workflow-step.done { background: #e6f5ed; color: var(--green-600); }
+    .workflow-step.current { background: #ffe7e3; color: var(--coral-600); border-color: #f2b0aa; }
+
+    .notif {
+      display: grid;
+      grid-template-columns: 8px 1fr auto;
+      gap: 12px;
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .severity { border-radius: 999px; background: var(--coral-600); }
+    .severity.info { background: var(--blue-500); }
+    .severity.ok { background: var(--green-600); }
+
+    .pagination {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border-top: 1px solid var(--line);
+      background: #fffdf9;
+      color: var(--ink-500);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    @media (max-width: 1200px) {
+      .grid.kpis { grid-template-columns: repeat(3, 1fr); }
+      .skeleton.kpi-row { grid-template-columns: repeat(3, 1fr); }
+      .grid.two, .grid.three, .grid.four, .grid.dashboard-main, .grid.dashboard-analytics, .grid.dashboard-chart-stack, .grid.dashboard-ops { grid-template-columns: 1fr; }
+      .chart-feature .dashboard-chart { min-height: 268px; }
+      .chart-feature .chart-plot { min-height: 168px; }
+      .pipeline { grid-template-columns: repeat(3, 1fr); }
+      .compare-grid { grid-template-columns: 180px repeat(3, 1fr); }
+    }
+
+    @media (max-width: 860px) {
+      .shell { grid-template-columns: 1fr; }
+      .sidebar { position: static; height: auto; }
+      .topbar { position: static; flex-direction: column; align-items: stretch; }
+      .search { min-width: 0; width: 100%; }
+      .grid.kpis, .pipeline { grid-template-columns: 1fr; }
+      .skeleton.kpi-row { grid-template-columns: 1fr; }
+      .compare-grid { grid-template-columns: 1fr; }
+      .compare-cell { border-right: 0; }
+      table { min-width: 760px; }
+      .table-wrap { overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand"><div class="brand-mark"><img class="brand-logo" src="assets/odoo-force-logo.png" alt="Odoo Force logo"></div><span>Odoo Force</span></div>
+      <div class="nav-label">Operate</div>
+      <a class="nav-item active" href="#dashboard">Dashboard <span class="badge-count">6</span></a>
+      <a class="nav-item" href="#vendors">Vendors</a>
+      <a class="nav-item" href="#rfqs">RFQs <span class="badge-count">14</span></a>
+      <a class="nav-item" href="#quotations">Quotations</a>
+      <a class="nav-item" href="#comparison">Comparison</a>
+      <a class="nav-item" href="#approvals">Approvals <span class="badge-count">8</span></a>
+      <div class="nav-label">Fulfill</div>
+      <a class="nav-item" href="#purchase-orders">Purchase Orders</a>
+      <a class="nav-item" href="#invoices">Invoices</a>
+      <a class="nav-item" href="#reports">Reports</a>
+      <div class="nav-label">System</div>
+      <a class="nav-item" href="#activity">Activity Timeline</a>
+      <a class="nav-item" href="#notifications">Notifications</a>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <div class="search">Search RFQs, vendors, POs, invoices, approvals...</div>
+        <div class="top-actions">
+          <button class="btn ghost">Export</button>
+          <button class="btn">Configure View</button>
+          <button class="btn primary">Create RFQ</button>
+        </div>
+      </header>
+
+      <div class="content" id="pageContent">
+        <div class="skeleton-page" aria-hidden="true">
+          <div class="skeleton title"></div>
+          <div class="skeleton sub"></div>
+          <div class="skeleton kpi-row">
+            <div class="skeleton kpi"></div>
+            <div class="skeleton kpi"></div>
+            <div class="skeleton kpi"></div>
+            <div class="skeleton kpi"></div>
+            <div class="skeleton kpi"></div>
+            <div class="skeleton kpi"></div>
+          </div>
+          <div class="grid two">
+            <div class="skeleton panel"></div>
+            <div class="skeleton table"></div>
+          </div>
+        </div>
+        <section class="page" id="dashboard">
+          <div class="page-head">
+            <div>
+              <h1>Procurement Command Center</h1>
+              <div class="muted">Live workflow visibility across RFQs, quotations, approvals, purchase orders, invoices, and spend.</div>
+            </div>
+            <button class="btn primary">New Procurement Request</button>
+          </div>
+          <div class="grid kpis">
+            <div class="card kpi"><div class="label">Active RFQs</div><div class="value">42</div><div class="delta">+12 this week</div></div>
+            <div class="card kpi"><div class="label">Quotations Received</div><div class="value">186</div><div class="delta">81% response rate</div></div>
+            <div class="card kpi"><div class="label">Pending Approvals</div><div class="value">8</div><div class="delta warn">3 urgent</div></div>
+            <div class="card kpi"><div class="label">Purchase Orders</div><div class="value">31</div><div class="delta">18 released</div></div>
+            <div class="card kpi"><div class="label">Open Invoices</div><div class="value">24</div><div class="delta warn">5 overdue</div></div>
+            <div class="card kpi"><div class="label">Procurement Spend</div><div class="value">$2.84M</div><div class="delta">-6.2% vs plan</div></div>
+          </div>
+          <div class="card">
+            <div class="toolbar"><div class="field">Period: Current quarter</div><div class="field">Workflow: Active</div><div class="field">Owner: All teams</div><div class="field">Value: All ranges</div><button class="btn">Refresh</button><button class="btn">Export Dashboard</button></div>
+          </div>
+          <div class="grid dashboard-main">
+            <div class="card">
+              <div class="card-head"><h2>Procurement Pipeline</h2><span class="muted">RFQ -> PO visibility</span></div>
+              <div class="pipeline">
+                <div class="stage"><strong>Draft</strong><div class="count">7</div><span class="muted">$310k</span></div>
+                <div class="stage"><strong>Sent</strong><div class="count">14</div><span class="muted">52 vendors</span></div>
+                <div class="stage"><strong>Quotes Received</strong><div class="count">11</div><span class="muted">ready to compare</span></div>
+                <div class="stage"><strong>Approval Pending</strong><div class="count">8</div><span class="muted">finance queue</span></div>
+                <div class="stage"><strong>Approved</strong><div class="count">5</div><span class="muted">PO ready</span></div>
+                <div class="stage"><strong>PO Generated</strong><div class="count">31</div><span class="muted">tracked</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="grid dashboard-analytics">
+            <div class="card chart-feature">
+              <div class="card-head"><h2>Spend Forecast</h2><span class="muted">Area chart</span></div>
+              <div class="dashboard-chart">
+                <div class="chart-stat"><div><strong>$2.84M</strong><span>Committed procurement spend</span></div><span class="status green">On plan</span></div>
+                <div class="chart-plot">
+                  <div class="chart-axis"><span>$3M</span><span>$2M</span><span>$1M</span><span>$0</span></div>
+                  <div class="chart-canvas">
+                    <svg class="area-chart" viewBox="0 0 420 168" preserveAspectRatio="none" role="img" aria-label="Procurement spend area chart">
+                      <defs>
+                        <linearGradient id="spendAreaGradient" x1="0" x2="0" y1="0" y2="1">
+                          <stop offset="0%" stop-color="#E85A4F" stop-opacity=".34"></stop>
+                          <stop offset="62%" stop-color="#E98074" stop-opacity=".12"></stop>
+                          <stop offset="100%" stop-color="#E98074" stop-opacity="0"></stop>
+                        </linearGradient>
+                      </defs>
+                      <line class="chart-grid-line" x1="0" y1="42" x2="420" y2="42"></line>
+                      <line class="chart-grid-line" x1="0" y1="84" x2="420" y2="84"></line>
+                      <line class="chart-grid-line" x1="0" y1="126" x2="420" y2="126"></line>
+                      <path class="area-fill" d="M0 126 L0 116 L70 98 L140 108 L210 62 L280 78 L350 42 L420 54 L420 168 L0 168 Z"></path>
+                      <path class="area-stroke" d="M0 116 L70 98 L140 108 L210 62 L280 78 L350 42 L420 54"></path>
+                      <circle class="area-point" cx="0" cy="116" r="4.5"></circle>
+                      <circle class="area-point" cx="70" cy="98" r="4.5"></circle>
+                      <circle class="area-point" cx="140" cy="108" r="4.5"></circle>
+                      <circle class="area-point" cx="210" cy="62" r="4.5"></circle>
+                      <circle class="area-point" cx="280" cy="78" r="4.5"></circle>
+                      <circle class="area-point" cx="350" cy="42" r="4.5"></circle>
+                      <circle class="area-point" cx="420" cy="54" r="4.5"></circle>
+                    </svg>
+                  </div>
+                </div>
+                <div class="chart-labels"><span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span></div>
+                <div class="chart-summary"><span class="chart-legend"><span class="legend-dot"></span>Forecast spend</span><span>-6.2% vs plan</span></div>
+              </div>
+            </div>
+            <div class="grid dashboard-chart-stack">
+              <div class="card">
+                <div class="card-head"><h2>RFQ Volume</h2><span class="muted">Bar chart</span></div>
+                <div class="dashboard-chart">
+                  <div class="chart-stat"><div><strong>186</strong><span>Quotes received this half</span></div><span class="status blue">+18%</span></div>
+                  <div class="chart-plot">
+                    <div class="chart-axis"><span>60</span><span>40</span><span>20</span><span>0</span></div>
+                    <div class="chart-canvas">
+                      <div class="chart-bars">
+                        <div class="chart-bar" data-value="28" style="height:46%"></div>
+                        <div class="chart-bar" data-value="37" style="height:62%"></div>
+                        <div class="chart-bar" data-value="33" style="height:55%"></div>
+                        <div class="chart-bar" data-value="47" style="height:78%"></div>
+                        <div class="chart-bar" data-value="41" style="height:68%"></div>
+                        <div class="chart-bar" data-value="52" style="height:86%"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="chart-labels"><span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span></div>
+                  <div class="chart-summary"><span class="chart-legend"><span class="legend-dot"></span>RFQs issued</span><span>42 active now</span></div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-head"><h2>Approval Turnaround</h2><span class="muted">Line chart</span></div>
+                <div class="dashboard-chart">
+                  <div class="chart-stat"><div><strong>18h</strong><span>Average finance decision time</span></div><span class="status green">Improving</span></div>
+                  <div class="chart-plot">
+                    <div class="chart-axis"><span>48h</span><span>32h</span><span>16h</span><span>0h</span></div>
+                    <div class="chart-canvas">
+                      <svg class="line-chart" viewBox="0 0 420 168" role="img" aria-label="Approval turnaround line chart">
+                        <line class="chart-grid-line" x1="0" y1="42" x2="420" y2="42"></line>
+                        <line class="chart-grid-line" x1="0" y1="84" x2="420" y2="84"></line>
+                        <line class="chart-grid-line" x1="0" y1="126" x2="420" y2="126"></line>
+                        <path class="line-stroke" d="M0 108 L70 88 L140 96 L210 72 L280 58 L350 46 L420 36"></path>
+                        <circle class="chart-point" cx="0" cy="108" r="5"></circle>
+                        <circle class="chart-point" cx="70" cy="88" r="5"></circle>
+                        <circle class="chart-point" cx="140" cy="96" r="5"></circle>
+                        <circle class="chart-point" cx="210" cy="72" r="5"></circle>
+                        <circle class="chart-point" cx="280" cy="58" r="5"></circle>
+                        <circle class="chart-point" cx="350" cy="46" r="5"></circle>
+                        <circle class="chart-point" cx="420" cy="36" r="5"></circle>
+                      </svg>
+                    </div>
+                  </div>
+                  <div class="chart-labels"><span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span></div>
+                  <div class="chart-summary"><span class="chart-legend"><span class="legend-dot blue"></span>Decision hours</span><span>Target under 24h</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="grid dashboard-ops">
+            <div class="card">
+              <div class="card-head"><h2>Pending Approvals</h2><span class="status amber">8 waiting</span></div>
+              <div class="table-wrap"><table>
+                <thead><tr><th>Approval</th><th>RFQ</th><th>Value</th><th>SLA</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr><td>APP-2026-0034</td><td>RFQ-2026-0142</td><td>$139,400</td><td>4h left</td><td><span class="status red">Urgent</span></td></tr>
+                  <tr><td>APP-2026-0033</td><td>RFQ-2026-0139</td><td>$72,000</td><td>1d left</td><td><span class="status amber">Pending</span></td></tr>
+                  <tr><td>APP-2026-0031</td><td>RFQ-2026-0132</td><td>$210,000</td><td>2d left</td><td><span class="status blue">Review</span></td></tr>
+                </tbody>
+              </table></div>
+            </div>
+            <div class="card">
+              <div class="card-head"><h2>Recent Activity</h2><span class="muted">Audit trail</span></div>
+              <div class="timeline">
+                <div class="event"><span class="dot"></span><div><strong>RFQ-2026-0142 sent</strong><div class="muted">Procurement invited 6 vendors.</div></div><span class="muted">9m</span></div>
+                <div class="event"><span class="dot"></span><div><strong>QUO-2026-0088 recommended</strong><div class="muted">Lowest compliant bid selected.</div></div><span class="muted">31m</span></div>
+                <div class="event"><span class="dot"></span><div><strong>INV-2026-0041 overdue</strong><div class="muted">Finance follow-up required.</div></div><span class="muted">1h</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="page" id="vendors">
+          <div class="page-head"><div><h1>Vendors</h1><div class="muted">Lifecycle, category, compliance, performance, and spend visibility.</div></div><button class="btn primary">Invite Vendor</button></div>
+          <div class="card">
+            <div class="toolbar"><div class="field">Search vendors</div><div class="field">Category: All</div><div class="field">Risk: Any</div><div class="field">Status: Active</div><button class="btn">Bulk Action</button><button class="btn">Export</button></div>
+            <div class="table-wrap"><table>
+              <thead><tr><th>Vendor</th><th>Category</th><th>Lifecycle</th><th>Score</th><th>Risk</th><th>Spend</th><th>Open RFQs</th><th>Actions</th></tr></thead>
+              <tbody>
+                <tr><td>BrightSource Supply</td><td>Industrial Parts</td><td><span class="status green">Approved</span></td><td>94</td><td><span class="status green">Low</span></td><td>$486k</td><td>4</td><td>View Compare</td></tr>
+                <tr><td>Metro Industrial</td><td>MRO</td><td><span class="status blue">Onboarding</span></td><td>89</td><td><span class="status amber">Medium</span></td><td>$221k</td><td>2</td><td>Review</td></tr>
+                <tr><td>Apex Logistics</td><td>Transport</td><td><span class="status green">Approved</span></td><td>76</td><td><span class="status amber">Medium</span></td><td>$734k</td><td>6</td><td>Open</td></tr>
+              </tbody>
+            </table></div>
+            <div class="pagination"><span>1-25 of 214 vendors</span><span>Previous | Next</span></div>
+          </div>
+        </section>
+
+        <section class="page" id="rfqs">
+          <div class="page-head"><div><h1>RFQ Management</h1><div class="muted">High-density RFQ list with workflow progress and action readiness.</div></div><button class="btn primary">Create RFQ</button></div>
+          <div class="card">
+            <div class="workflow">
+              <div class="workflow-step done">Draft</div><span>-></span><div class="workflow-step done">Sent</div><span>-></span><div class="workflow-step current">Quotes Received</div><span>-></span><div class="workflow-step">Approval Pending</div><span>-></span><div class="workflow-step">Approved</div><span>-></span><div class="workflow-step">PO Generated</div>
+            </div>
+            <div class="toolbar"><div class="field">Search RFQs</div><div class="field">Status: All</div><div class="field">Deadline: Next 30 days</div><div class="field">Owner: Me</div><button class="btn">Bulk Send</button><button class="btn">Export</button></div>
+            <div class="table-wrap"><table>
+              <thead><tr><th>RFQ ID</th><th>Title</th><th>Value</th><th>Vendors</th><th>Quotes</th><th>Deadline</th><th>Status</th><th>Progress</th><th>Actions</th></tr></thead>
+              <tbody>
+                <tr><td>RFQ-2026-0142</td><td>Packaging material Q3</td><td>$148k</td><td>6</td><td>5</td><td>Jun 12</td><td><span class="status coral">Quotes Received</span></td><td><div class="progress"><span style="width:48%"></span></div></td><td>Compare</td></tr>
+                <tr><td>RFQ-2026-0139</td><td>Warehouse scanners</td><td>$72k</td><td>4</td><td>4</td><td>Jun 09</td><td><span class="status amber">Approval Pending</span></td><td><div class="progress"><span style="width:68%"></span></div></td><td>Open Approval</td></tr>
+                <tr><td>RFQ-2026-0132</td><td>Fleet maintenance</td><td>$210k</td><td>8</td><td>7</td><td>Jun 18</td><td><span class="status green">Approved</span></td><td><div class="progress"><span style="width:82%"></span></div></td><td>Generate PO</td></tr>
+              </tbody>
+            </table></div>
+            <div class="pagination"><span>Sorted by deadline ascending</span><span>1-25 of 42 RFQs</span></div>
+          </div>
+        </section>
+
+        <section class="page" id="quotations">
+          <div class="page-head"><div><h1>Quotations</h1><div class="muted">Quotation inbox with compliance, pricing, delivery, and response status.</div></div><button class="btn">Export Quotations</button></div>
+          <div class="card">
+            <div class="toolbar"><div class="field">Search quotations</div><div class="field">RFQ: All</div><div class="field">Compliance: Passed</div><div class="field">Sort: Amount</div><button class="btn">Bulk Shortlist</button><button class="btn">Export</button></div>
+            <div class="table-wrap"><table>
+              <thead><tr><th>Quote</th><th>Vendor</th><th>RFQ</th><th>Amount</th><th>Delivery</th><th>Compliance</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody>
+                <tr><td>QUO-2026-0088</td><td>BrightSource Supply</td><td>RFQ-2026-0142</td><td>$139,400</td><td>12 days</td><td><span class="status green">Passed</span></td><td><span class="status blue">Submitted</span></td><td>Compare</td></tr>
+                <tr><td>QUO-2026-0089</td><td>Metro Industrial</td><td>RFQ-2026-0142</td><td>$142,900</td><td>9 days</td><td><span class="status green">Passed</span></td><td><span class="status blue">Submitted</span></td><td>Compare</td></tr>
+                <tr><td>QUO-2026-0090</td><td>Apex Logistics</td><td>RFQ-2026-0142</td><td>$151,300</td><td>8 days</td><td><span class="status amber">Review</span></td><td><span class="status gray">Flagged</span></td><td>Inspect</td></tr>
+              </tbody>
+            </table></div>
+            <div class="pagination"><span>Vendor isolation note: vendor users see only their own quotation rows.</span><span>1-25 of 186</span></div>
+          </div>
+        </section>
+
+        <section class="page" id="comparison">
+          <div class="page-head"><div><h1>Quotation Comparison</h1><div class="muted">Side-by-side bid evaluation with recommendation and award readiness.</div></div><button class="btn primary">Recommend BrightSource</button></div>
+          <div class="grid two">
+            <div class="card">
+              <div class="toolbar"><div class="field">RFQ-2026-0142</div><div class="field">Sort: Weighted Score</div><div class="field">Filter: Compliant only</div><button class="btn">Export Matrix</button></div>
+              <div class="compare-grid">
+                <div class="compare-cell label">Vendor</div><div class="compare-cell"><strong>BrightSource</strong></div><div class="compare-cell"><strong>Metro Industrial</strong></div><div class="compare-cell"><strong>Apex Logistics</strong></div>
+                <div class="compare-cell label">Total Price</div><div class="compare-cell best">$139,400 Lowest</div><div class="compare-cell">$142,900</div><div class="compare-cell">$151,300</div>
+                <div class="compare-cell label">Delivery Time</div><div class="compare-cell">12 days</div><div class="compare-cell">9 days</div><div class="compare-cell best">8 days Fastest</div>
+                <div class="compare-cell label">Vendor Score</div><div class="compare-cell best">94 / 100</div><div class="compare-cell">89 / 100</div><div class="compare-cell">76 / 100</div>
+                <div class="compare-cell label">Compliance</div><div class="compare-cell best">Passed</div><div class="compare-cell">Passed</div><div class="compare-cell">Needs review</div>
+                <div class="compare-cell label">Warranty</div><div class="compare-cell">24 months</div><div class="compare-cell best">36 months</div><div class="compare-cell">18 months</div>
+              </div>
+            </div>
+            <div class="card pad recommendation">
+              <h2>Recommendation</h2>
+              <p><strong>BrightSource Supply</strong> is recommended because it has the lowest compliant price, strongest vendor score, and acceptable delivery window.</p>
+              <div class="grid">
+                <span class="status green">Lowest price</span>
+                <span class="status green">Highest vendor score</span>
+                <span class="status amber">Delivery not fastest</span>
+              </div>
+              <br>
+              <button class="btn primary">Send To Finance Approval</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="page" id="approvals">
+          <div class="page-head"><div><h1>Approval Management</h1><div class="muted">Finance queue with decision actions, approval context, and workflow history.</div></div><button class="btn">Export Queue</button></div>
+          <div class="grid two">
+            <div class="card">
+              <div class="toolbar"><div class="field">Search approvals</div><div class="field">Priority: Urgent first</div><div class="field">Value: All</div><button class="btn">Bulk Assign</button></div>
+              <div class="table-wrap"><table>
+                <thead><tr><th>Approval</th><th>RFQ</th><th>Vendor</th><th>Value</th><th>SLA</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody>
+                  <tr><td>APP-2026-0034</td><td>RFQ-2026-0142</td><td>BrightSource</td><td>$139,400</td><td>4h left</td><td><span class="status red">Urgent</span></td><td>Approve | Reject | Changes</td></tr>
+                  <tr><td>APP-2026-0033</td><td>RFQ-2026-0139</td><td>Metro Industrial</td><td>$72,000</td><td>1d left</td><td><span class="status amber">Pending</span></td><td>Review</td></tr>
+                </tbody>
+              </table></div>
+            </div>
+            <div class="card">
+              <div class="card-head"><h2>Approval Timeline</h2><span class="status amber">Pending Finance</span></div>
+              <div class="workflow"><div class="workflow-step done">Recommended</div><span>-></span><div class="workflow-step current">Finance Review</div><span>-></span><div class="workflow-step">Approved</div><span>-></span><div class="workflow-step">PO Ready</div></div>
+              <div class="timeline">
+                <div class="event"><span class="dot"></span><div><strong>Procurement recommended quote</strong><div class="muted">Scorecard attached for finance.</div></div><span class="muted">Today</span></div>
+                <div class="event"><span class="dot"></span><div><strong>Vendor quote received</strong><div class="muted">All required RFQ items priced.</div></div><span class="muted">Yesterday</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="page" id="purchase-orders">
+          <div class="page-head"><div><h1>Purchase Orders</h1><div class="muted">PO lifecycle, vendor details, item breakdown, tax summary, and delivery tracking.</div></div><button class="btn primary">Generate PO</button></div>
+          <div class="grid two">
+            <div class="card">
+              <div class="card-head"><h2>PO-2026-0056</h2><span class="status blue">Released</span></div>
+              <div class="workflow"><div class="workflow-step done">Generated</div><span>-></span><div class="workflow-step current">Released</div><span>-></span><div class="workflow-step">Acknowledged</div><span>-></span><div class="workflow-step">In Delivery</div><span>-></span><div class="workflow-step">Closed</div></div>
+              <table>
+                <thead><tr><th>Item</th><th>Qty</th><th>Unit Price</th><th>Tax</th><th>Total</th></tr></thead>
+                <tbody>
+                  <tr><td>Packaging roll 30cm</td><td>1,200</td><td>$42</td><td>$5,040</td><td>$55,440</td></tr>
+                  <tr><td>Packaging roll 50cm</td><td>900</td><td>$66</td><td>$5,940</td><td>$65,340</td></tr>
+                  <tr><td>Protective inserts</td><td>4,000</td><td>$3</td><td>$1,080</td><td>$13,080</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="card pad">
+              <h2>Vendor and Tax Summary</h2>
+              <p><strong>BrightSource Supply</strong><br><span class="muted">Approved vendor, low risk, score 94.</span></p>
+              <p>Subtotal: <strong>$127,260</strong><br>Tax: <strong>$12,060</strong><br>Total: <strong>$139,320</strong></p>
+              <div class="progress"><span style="width:45%"></span></div>
+              <p class="muted">Delivery tracking: 45% of scheduled milestones complete.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="page" id="invoices">
+          <div class="page-head"><div><h1>Invoices</h1><div class="muted">Payment status, overdue indicators, PDF export, print, and email actions.</div></div><button class="btn">Export Aging</button></div>
+          <div class="card">
+            <div class="toolbar"><div class="field">Search invoices</div><div class="field">Payment: Open</div><div class="field">Due: Overdue first</div><button class="btn">PDF</button><button class="btn">Print</button><button class="btn">Email</button><button class="btn">Export</button></div>
+            <div class="table-wrap"><table>
+              <thead><tr><th>Invoice</th><th>PO</th><th>Vendor</th><th>Amount</th><th>Due Date</th><th>Payment</th><th>Risk</th><th>Actions</th></tr></thead>
+              <tbody>
+                <tr><td>INV-2026-0041</td><td>PO-2026-0048</td><td>Apex Logistics</td><td>$88,200</td><td>Jun 02</td><td><span class="status red">Overdue</span></td><td>High</td><td>Pay | Email</td></tr>
+                <tr><td>INV-2026-0042</td><td>PO-2026-0056</td><td>BrightSource</td><td>$139,320</td><td>Jun 18</td><td><span class="status amber">Open</span></td><td>Normal</td><td>PDF | Print</td></tr>
+                <tr><td>INV-2026-0038</td><td>PO-2026-0041</td><td>Metro Industrial</td><td>$42,600</td><td>May 30</td><td><span class="status green">Paid</span></td><td>Closed</td><td>View</td></tr>
+              </tbody>
+            </table></div>
+          </div>
+        </section>
+
+        <section class="page" id="reports">
+          <div class="page-head"><div><h1>Reports & Analytics</h1><div class="muted">SaaS-level procurement intelligence for spend, funnel, vendors, and approval speed.</div></div><button class="btn primary">Schedule Report</button></div>
+          <div class="card">
+            <div class="toolbar"><div class="field">Period: Last 6 months</div><div class="field">Category: All</div><div class="field">Vendor: All</div><div class="field">Workflow: Completed</div><button class="btn">Export CSV</button><button class="btn">Download PDF</button></div>
+          </div>
+          <div class="grid report-metrics">
+            <div class="card report-metric"><span>Total Spend</span><strong>$2.84M</strong><div class="delta">-6.2% vs plan</div></div>
+            <div class="card report-metric"><span>Avg Approval Time</span><strong>18h</strong><div class="delta">22% faster</div></div>
+            <div class="card report-metric"><span>Vendor Response</span><strong>81%</strong><div class="delta">+9% QoQ</div></div>
+            <div class="card report-metric"><span>Realized Savings</span><strong>$186k</strong><div class="delta">from comparisons</div></div>
+          </div>
+          <div class="grid report-grid">
+            <div class="card">
+              <div class="card-head"><h2>Procurement Spend Trend</h2><span class="status green">Within budget</span></div>
+              <div class="dashboard-chart">
+                <div class="chart-stat"><div><strong>$2.84M</strong><span>Committed and invoiced spend</span></div><span class="status green">On plan</span></div>
+                <div class="chart-plot">
+                  <div class="chart-axis"><span>$3M</span><span>$2M</span><span>$1M</span><span>$0</span></div>
+                  <div class="chart-canvas">
+                    <svg class="area-chart" viewBox="0 0 420 168" role="img" aria-label="Report spend trend area chart">
+                      <defs>
+                        <linearGradient id="reportSpendGradient" x1="0" x2="0" y1="0" y2="1">
+                          <stop offset="0%" stop-color="#2878D7" stop-opacity=".32"></stop>
+                          <stop offset="62%" stop-color="#2878D7" stop-opacity=".12"></stop>
+                          <stop offset="100%" stop-color="#2878D7" stop-opacity="0"></stop>
+                        </linearGradient>
+                      </defs>
+                      <line class="chart-grid-line" x1="0" y1="42" x2="420" y2="42"></line>
+                      <line class="chart-grid-line" x1="0" y1="84" x2="420" y2="84"></line>
+                      <line class="chart-grid-line" x1="0" y1="126" x2="420" y2="126"></line>
+                      <path style="fill:url(#reportSpendGradient)" d="M0 132 L0 118 L70 108 L140 92 L210 104 L280 64 L350 72 L420 38 L420 168 L0 168 Z"></path>
+                      <path class="line-stroke" d="M0 118 L70 108 L140 92 L210 104 L280 64 L350 72 L420 38"></path>
+                      <circle class="chart-point" cx="0" cy="118" r="5"></circle>
+                      <circle class="chart-point" cx="70" cy="108" r="5"></circle>
+                      <circle class="chart-point" cx="140" cy="92" r="5"></circle>
+                      <circle class="chart-point" cx="210" cy="104" r="5"></circle>
+                      <circle class="chart-point" cx="280" cy="64" r="5"></circle>
+                      <circle class="chart-point" cx="350" cy="72" r="5"></circle>
+                      <circle class="chart-point" cx="420" cy="38" r="5"></circle>
+                    </svg>
+                  </div>
+                </div>
+                <div class="chart-labels"><span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span></div>
+                <div class="chart-summary"><span class="chart-legend"><span class="legend-dot blue"></span>Spend trend</span><span>Forecast stable</span></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-head"><h2>RFQ Funnel</h2><span class="muted">Conversion health</span></div>
+              <div class="funnel-bars">
+                <div class="funnel-row"><span>Created</span><div class="funnel-track"><span style="width:100%"></span></div><strong>126</strong></div>
+                <div class="funnel-row"><span>Sent</span><div class="funnel-track"><span style="width:84%"></span></div><strong>106</strong></div>
+                <div class="funnel-row"><span>Quoted</span><div class="funnel-track"><span style="width:65%"></span></div><strong>82</strong></div>
+                <div class="funnel-row"><span>Approved</span><div class="funnel-track"><span style="width:38%"></span></div><strong>48</strong></div>
+                <div class="funnel-row"><span>PO Issued</span><div class="funnel-track"><span style="width:29%"></span></div><strong>37</strong></div>
+              </div>
+              <div class="pagination"><span>Largest drop-off: Quoted to Approved</span><span class="status amber">Needs review</span></div>
+            </div>
+          </div>
+          <div class="grid report-split">
+            <div class="card">
+              <div class="card-head"><h2>Category Spend</h2><span class="muted">Portfolio mix</span></div>
+              <div class="donut-wrap">
+                <div class="donut"></div>
+                <div class="insight-list">
+                  <div class="insight-row"><span><span class="legend-dot"></span> Industrial</span><strong>$820k</strong></div>
+                  <div class="insight-row"><span><span class="legend-dot blue"></span> Logistics</span><strong>$610k</strong></div>
+                  <div class="insight-row"><span><span class="legend-dot" style="background:var(--green-600)"></span> IT</span><strong>$390k</strong></div>
+                  <div class="insight-row"><span><span class="legend-dot" style="background:var(--amber-500)"></span> Services</span><strong>$280k</strong></div>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-head"><h2>Vendor Performance Analytics</h2><span class="muted">Score, spend, response</span></div>
+              <div class="table-wrap"><table>
+                <thead><tr><th>Vendor</th><th>Score</th><th>Response</th><th>Spend</th><th>Risk</th></tr></thead>
+                <tbody>
+                  <tr><td>BrightSource Supply</td><td><span class="status green">94</span></td><td>96%</td><td>$486k</td><td><span class="status green">Low</span></td></tr>
+                  <tr><td>Metro Industrial</td><td><span class="status blue">89</span></td><td>88%</td><td>$221k</td><td><span class="status amber">Medium</span></td></tr>
+                  <tr><td>Apex Logistics</td><td><span class="status amber">76</span></td><td>74%</td><td>$734k</td><td><span class="status amber">Medium</span></td></tr>
+                  <tr><td>Northline Components</td><td><span class="status green">91</span></td><td>92%</td><td>$318k</td><td><span class="status green">Low</span></td></tr>
+                </tbody>
+              </table></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="page" id="activity">
+          <div class="page-head"><div><h1>Activity Timeline</h1><div class="muted">Searchable audit history for major workflow actions and state transitions.</div></div><button class="btn">Export Audit Log</button></div>
+          <div class="card">
+            <div class="toolbar"><div class="field">Search activity</div><div class="field">Object: All</div><div class="field">Actor: All</div><div class="field">Date: Last 7 days</div></div>
+            <div class="timeline">
+              <div class="event"><span class="dot"></span><div><strong>Finance approved APP-2026-0031</strong><div class="muted">Approval moved to PO-ready state. Metadata preview: RFQ, quote, amount.</div></div><span class="muted">10:24</span></div>
+              <div class="event"><span class="dot"></span><div><strong>Procurement generated PO-2026-0056</strong><div class="muted">Generated from approved quotation. Totals derived from source records.</div></div><span class="muted">09:52</span></div>
+              <div class="event"><span class="dot"></span><div><strong>Vendor submitted QUO-2026-0088</strong><div class="muted">All RFQ items priced. Vendor isolation enforced in implementation notes.</div></div><span class="muted">08:40</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="page" id="notifications">
+          <div class="page-head"><div><h1>Notifications Center</h1><div class="muted">Grouped workflow notifications with urgency, ownership, and action state.</div></div><button class="btn">Mark All Read</button></div>
+          <div class="card">
+            <div class="toolbar"><div class="field">Search notifications</div><div class="field">Urgency: All</div><div class="field">Workflow: Procurement</div><div class="field">Read state: Unread</div></div>
+            <div class="notif"><span class="severity"></span><div><strong>Approval requires finance action</strong><div class="muted">APP-2026-0034 is within 4 hours of SLA breach.</div></div><span class="status red">Urgent</span></div>
+            <div class="notif"><span class="severity info"></span><div><strong>New quotation received</strong><div class="muted">Metro Industrial submitted QUO-2026-0089 for RFQ-2026-0142.</div></div><span class="status blue">RFQ</span></div>
+            <div class="notif"><span class="severity ok"></span><div><strong>Purchase order acknowledged</strong><div class="muted">BrightSource acknowledged PO-2026-0056.</div></div><span class="status green">PO</span></div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script>
+    const pageContent = document.querySelector("#pageContent");
+    const pages = Array.from(document.querySelectorAll(".page"));
+    const navItems = Array.from(document.querySelectorAll(".nav-item"));
+    const validPageIds = new Set(pages.map((page) => page.id));
+    let loaderTimer;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    function animatePage(page) {
+      if (reduceMotion || !window.gsap) {
+        return;
+      }
+
+      const cards = page.querySelectorAll(".card");
+      const bars = page.querySelectorAll(".chart-bar");
+      const lines = page.querySelectorAll(".area-stroke, .line-stroke");
+      const points = page.querySelectorAll(".chart-point");
+
+      gsap.killTweensOf([page, cards, bars, lines, points]);
+      gsap.fromTo(page.querySelector(".page-head"), { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: .38, ease: "power2.out" });
+      gsap.fromTo(cards, { opacity: 0, y: 18, scale: .985 }, { opacity: 1, y: 0, scale: 1, duration: .42, ease: "power2.out", stagger: .045, onComplete: () => gsap.set(cards, { clearProps: "transform" }) });
+
+      if (bars.length) {
+        gsap.fromTo(bars, { scaleY: .12, opacity: .35 }, { scaleY: 1, opacity: 1, duration: .7, ease: "power3.out", stagger: .055, delay: .12 });
+      }
+
+      lines.forEach((line) => {
+        const length = line.getTotalLength ? line.getTotalLength() : 0;
+        if (!length) return;
+        line.style.strokeDasharray = length;
+        line.style.strokeDashoffset = length;
+        gsap.to(line, { strokeDashoffset: 0, duration: .85, ease: "power2.out", delay: .16 });
+      });
+
+      if (points.length) {
+        gsap.fromTo(points, { scale: 0, transformOrigin: "50% 50%" }, { scale: 1, duration: .32, ease: "back.out(1.7)", stagger: .045, delay: .72 });
+      }
+    }
+
+    function setActivePage(pageId, useLoader = true) {
+      const nextPageId = validPageIds.has(pageId) ? pageId : "dashboard";
+
+      window.clearTimeout(loaderTimer);
+      navItems.forEach((item) => {
+        item.classList.toggle("active", item.getAttribute("href") === `#${nextPageId}`);
+      });
+
+      if (useLoader) {
+        pageContent.classList.add("loading");
+      }
+
+      loaderTimer = window.setTimeout(() => {
+        pages.forEach((page) => {
+          page.hidden = page.id !== nextPageId;
+        });
+        pageContent.classList.remove("loading");
+        document.title = `${document.querySelector(`#${nextPageId} h1`).textContent} | Odoo Force`;
+        animatePage(document.getElementById(nextPageId));
+      }, useLoader ? 260 : 0);
+    }
+
+    navItems.forEach((item) => {
+      item.addEventListener("click", (event) => {
+        event.preventDefault();
+        const pageId = item.getAttribute("href").slice(1);
+        history.pushState(null, "", `#${pageId}`);
+        setActivePage(pageId);
+      });
+    });
+
+    window.addEventListener("popstate", () => {
+      setActivePage(location.hash.slice(1), true);
+    });
+
+    setActivePage(location.hash.slice(1), false);
+  </script>
+</body>
+</html>
