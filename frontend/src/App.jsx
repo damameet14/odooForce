@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { Navigate, Route, Routes, NavLink, useLocation, useNavigate, useParams } from "react-router-dom";
-import { BarChart3, Bell, Box, Building2, Check, ChevronRight, CircleDollarSign, ClipboardCheck, FileText, KeyRound, LayoutDashboard, LogOut, Menu, PackageCheck, Plus, Search, Send, ShoppingCart, Sparkles, Tag, Trash2, Truck, Users, X, Zap } from "lucide-react";
+import { BarChart3, Bell, Box, Building2, Check, ChevronRight, ClipboardCheck, FileText, IndianRupee, KeyRound, LayoutDashboard, LogOut, Menu, PackageCheck, Plus, Search, Send, ShoppingCart, Sparkles, Tag, Trash2, Truck, Users, X, Zap } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 import api from "./api/client";
@@ -75,7 +75,7 @@ function Login() {
 function Dashboard() {
   const { user } = useAuth(); const { data, error } = useLoad("/reports/dashboard-summary"); const spend = useLoad("/reports/monthly-spend");
   const cards = user.role === "VENDOR" ? [["Assigned RFQs", data?.rfqs, ShoppingCart], ["Quotations", data?.quotations, ClipboardCheck], ["Purchase orders", data?.purchaseOrders, PackageCheck], ["Invoices", data?.invoices, FileText]]
-    : [["Active RFQs", data?.rfqs, ShoppingCart], ["Pending approvals", data?.approvals, ClipboardCheck], ["Purchase orders", data?.purchaseOrders, PackageCheck], ["Procurement value", money(data?.totalSpend), CircleDollarSign]];
+    : [["Active RFQs", data?.rfqs, ShoppingCart], ["Pending approvals", data?.approvals, ClipboardCheck], ["Purchase orders", data?.purchaseOrders, PackageCheck], ["Procurement value", money(data?.totalSpend), IndianRupee]];
   return <><PageTitle title={`Good day, ${user.name.split(" ")[0]}`} subtitle="Here is the current state of your procurement workflow." action={user.role === "PROCUREMENT_OFFICER" && <Button icon={Plus} onClick={() => location.href = "/rfqs/create"}>Create RFQ</Button>} /><ErrorBox error={error} /><div className="stats">{cards.map(([label, value, Icon]) => <div className="stat" key={label}><div><span>{label}</span><strong>{value ?? "-"}</strong></div><Icon size={20} /></div>)}</div><div className="dashboard-grid"><section className="panel chart"><div className="panel-head"><div><h2>Monthly procurement spend</h2><p>Approved purchase order value</p></div></div><ResponsiveContainer width="100%" height={260}><BarChart data={spend.data || []}><CartesianGrid strokeDasharray="3 3" vertical={false} /><XAxis dataKey="month" /><YAxis tickFormatter={(v) => `${v / 1000}k`} /><Tooltip formatter={money} /><Bar dataKey="total" fill="#e85a4f" radius={[4, 4, 0, 0]} /></BarChart></ResponsiveContainer></section><QuickActions role={user.role} /></div></>;
 }
 function QuickActions({ role }) {
