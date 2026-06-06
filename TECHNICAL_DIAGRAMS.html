@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>odooForce Technical Diagrams</title>
+  <style>
+    :root {
+      --ink: #172128;
+      --muted: #5f6f73;
+      --line: #d5dee2;
+      --panel: #ffffff;
+      --page: #eef3f5;
+      --blue: #2563eb;
+      --green: #167d71;
+      --amber: #b7791f;
+      --violet: #6d28d9;
+      --red: #be123c;
+      --soft-blue: #e8f4ff;
+      --soft-green: #edf7f4;
+      --soft-amber: #fff7e6;
+      --soft-violet: #f3edff;
+      --soft-red: #fff1f2;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background: var(--page);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 28px; }
+    .sheet { max-width: 1340px; margin: 0 auto; }
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      align-items: flex-end;
+      margin-bottom: 24px;
+      border-bottom: 2px solid #cbd8dd;
+      padding-bottom: 18px;
+    }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: 30px; letter-spacing: 0; }
+    header p { margin-top: 8px; max-width: 820px; color: var(--muted); line-height: 1.55; }
+    .badge {
+      border: 1px solid var(--line);
+      background: #f8fbfc;
+      border-radius: 6px;
+      padding: 8px 10px;
+      color: #31474c;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    .section { margin-top: 24px; }
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 16px;
+      margin-bottom: 10px;
+    }
+    h2 { font-size: 19px; }
+    .section-head span { color: var(--muted); font-size: 13px; }
+    .diagram {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 20px;
+      overflow-x: auto;
+      box-shadow: 0 12px 30px rgba(39, 55, 64, 0.06);
+    }
+    .grid { display: grid; gap: 14px; min-width: 920px; }
+    .roles { grid-template-columns: repeat(4, minmax(190px, 1fr)); }
+    .arch { grid-template-columns: 1.1fr 1.5fr 1.5fr 1fr; align-items: stretch; }
+    .workflow { grid-template-columns: repeat(8, minmax(130px, 1fr)); align-items: start; }
+    .data { grid-template-columns: repeat(5, minmax(170px, 1fr)); }
+    .security { grid-template-columns: repeat(7, minmax(130px, 1fr)); }
+    .sequence { grid-template-columns: repeat(5, minmax(190px, 1fr)); align-items: start; }
+    .features { grid-template-columns: repeat(4, minmax(220px, 1fr)); }
+    .lane {
+      border: 1px solid var(--line);
+      background: #fbfdfe;
+      border-radius: 8px;
+      padding: 12px;
+      min-height: 100%;
+    }
+    .lane h3 { font-size: 14px; margin-bottom: 10px; color: #263c42; }
+    .stack { display: grid; gap: 10px; }
+    .node {
+      position: relative;
+      border: 1px solid var(--line);
+      background: #fbfdfe;
+      border-radius: 7px;
+      padding: 12px;
+      min-height: 82px;
+    }
+    .node strong { display: block; font-size: 14px; margin-bottom: 6px; color: #142b31; }
+    .node span, .node li { color: var(--muted); font-size: 12.5px; line-height: 1.45; }
+    .node ul { margin: 6px 0 0; padding-left: 18px; }
+    .client { background: var(--soft-blue); border-color: #b8d7ff; box-shadow: inset 4px 0 var(--blue); }
+    .api { background: var(--soft-green); border-color: #b7d8d1; box-shadow: inset 4px 0 var(--green); }
+    .service { background: var(--soft-amber); border-color: #edd397; box-shadow: inset 4px 0 var(--amber); }
+    .data-node { background: var(--soft-violet); border-color: #d2c2ff; box-shadow: inset 4px 0 var(--violet); }
+    .external { background: var(--soft-red); border-color: #f3bcc8; box-shadow: inset 4px 0 var(--red); }
+    .gate { background: #fffaf0; border-color: #e2c979; }
+    .fail { background: var(--soft-red); border-color: #f3bcc8; }
+    .arrow::after {
+      content: ">";
+      position: absolute;
+      right: -12px;
+      top: 35%;
+      color: var(--green);
+      font-weight: 800;
+      font-size: 20px;
+      z-index: 2;
+    }
+    .rail {
+      border-left: 2px solid var(--line);
+      margin-left: 10px;
+      padding-left: 12px;
+      display: grid;
+      gap: 8px;
+    }
+    .event {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 9px;
+      font-size: 12.5px;
+      color: var(--muted);
+      min-height: 54px;
+    }
+    .event strong { display: block; color: #172128; margin-bottom: 4px; }
+    .matrix {
+      width: 100%;
+      min-width: 960px;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 8px;
+    }
+    .matrix th, .matrix td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      font-size: 13px;
+    }
+    .matrix th { background: #e8f0f2; color: #263c42; }
+    .yes { color: var(--green); font-weight: 800; }
+    .no { color: #8a3a3a; }
+    .limited { color: var(--amber); font-weight: 700; }
+    @media (max-width: 900px) {
+      body { padding: 16px; }
+      header { display: block; }
+      .badge { display: inline-block; margin-top: 12px; }
+      .grid { min-width: 0; }
+      .roles, .arch, .workflow, .data, .security, .sequence, .features { grid-template-columns: 1fr; }
+      .arrow::after { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="sheet">
+    <header>
+      <div>
+        <h1>odooForce Technical Diagrams</h1>
+        <p>Current main-branch architecture, workflow, data, API, validation, reporting, and four-user access diagrams for the procurement ERP.</p>
+      </div>
+      <div class="badge">React + Express + Prisma + PostgreSQL</div>
+    </header>
+
+    <section class="section">
+      <div class="section-head">
+        <h2>1. Four-User Role Model</h2>
+        <span>Business users represented in the demo</span>
+      </div>
+      <div class="diagram grid roles">
+        <div class="node client"><strong>Admin</strong><span>Internal users, product catalog, categories, reset requests, audit visibility.</span></div>
+        <div class="node service"><strong>Manager</strong><span>Vendor oversight, approval decisions, reports, payment monitoring.</span></div>
+        <div class="node api"><strong>Officer</strong><span>Catalog RFQs, item awards, purchase orders, invoices, delivery receipt.</span></div>
+        <div class="node data-node"><strong>Vendor</strong><span>Assigned RFQs, own quotations, own purchase orders and invoices.</span></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h2>2. System Architecture</h2>
+        <span>Runtime components and integration boundaries</span>
+      </div>
+      <div class="diagram grid arch">
+        <div class="lane">
+          <h3>Client Layer</h3>
+          <div class="stack">
+            <div class="node client"><strong>Browser</strong><span>Authenticated ERP workspace.</span></div>
+            <div class="node client arrow"><strong>React/Vite SPA</strong><span>Role dashboards, forms, reports, PDF downloads.</span></div>
+          </div>
+        </div>
+        <div class="lane">
+          <h3>API Layer</h3>
+          <div class="stack">
+            <div class="node api"><strong>Express Routes</strong><span>/api endpoints and Swagger documentation.</span></div>
+            <div class="node api"><strong>Security Middleware</strong><span>Helmet, CORS, rate limit, JWT authentication.</span></div>
+            <div class="node api"><strong>Validation</strong><span>express-validator for users, vendors, products, RFQs, quotations, POs, invoices.</span></div>
+            <div class="node api arrow"><strong>Controllers</strong><span>Auth, master data, products, RFQ, workflow, report orchestration.</span></div>
+          </div>
+        </div>
+        <div class="lane">
+          <h3>Domain Services</h3>
+          <div class="stack">
+            <div class="node service"><strong>Activity Logs</strong><span>Operator-readable audit trail.</span></div>
+            <div class="node service"><strong>Notifications</strong><span>User-facing workflow events.</span></div>
+            <div class="node service"><strong>Numbering + PDF</strong><span>RFQ/QUO/PO/INV numbers and business documents.</span></div>
+            <div class="node service arrow"><strong>Email + Templates</strong><span>Brevo delivery with safe EmailLog persistence.</span></div>
+          </div>
+        </div>
+        <div class="lane">
+          <h3>Data + Providers</h3>
+          <div class="stack">
+            <div class="node data-node"><strong>Prisma ORM</strong><span>Only database access layer.</span></div>
+            <div class="node data-node"><strong>PostgreSQL</strong><span>Authoritative workflow data.</span></div>
+            <div class="node external"><strong>Brevo Email API</strong><span>Auth, PO, and invoice emails.</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h2>3. Procurement Workflow</h2>
+        <span>RFQ to invoice with enforcement points</span>
+      </div>
+      <div class="diagram grid workflow">
+        <div class="node api arrow"><strong>Create RFQ</strong><span>Officer selects catalog products, quantities, and vendors per item.</span></div>
+        <div class="node gate arrow"><strong>Validate RFQ</strong><span>Active products, positive quantities, and item vendor assignments.</span></div>
+        <div class="node api arrow"><strong>Send RFQ</strong><span>Vendors receive notifications for assigned items.</span></div>
+        <div class="node gate arrow"><strong>Vendor Gate</strong><span>Only assigned vendorId can access and quote item lines.</span></div>
+        <div class="node api arrow"><strong>Submit Quote</strong><span>Assigned items priced with GST and delivery days.</span></div>
+        <div class="node api arrow"><strong>Best Quote</strong><span>Compare per item and calculate cheapest valid combination.</span></div>
+        <div class="node gate arrow"><strong>Manager Approval</strong><span>Approval required before PO generation.</span></div>
+        <div class="node data-node"><strong>PO + Invoice</strong><span>Vendor-wise POs, delivery receipt, PDF/email, payment tracking.</span></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h2>4. Data Model</h2>
+        <span>Core persistence groups in main branch</span>
+      </div>
+      <div class="diagram grid data">
+        <div class="node client"><strong>Users</strong><ul><li>Admin</li><li>Manager</li><li>Officer</li><li>Vendor login</li><li>Password reset requests</li></ul></div>
+        <div class="node api"><strong>Products</strong><ul><li>Category</li><li>Unit</li><li>Default GST</li><li>Active/inactive status</li></ul></div>
+        <div class="node api"><strong>RFQs</strong><ul><li>Catalog RFQ items</li><li>Per-item vendors</li><li>Status lifecycle</li></ul></div>
+        <div class="node service"><strong>Quotations</strong><ul><li>Unique RFQ + vendor</li><li>Assigned item pricing</li><li>GST and delivery days</li></ul></div>
+        <div class="node data-node"><strong>Approvals</strong><ul><li>Selected item-vendor rows</li><li>Requester</li><li>Manager reviewer</li></ul></div>
+        <div class="node data-node"><strong>Purchase Orders</strong><ul><li>Vendor-wise approved items</li><li>PO items</li><li>Delivery record</li></ul></div>
+        <div class="node data-node"><strong>Invoices</strong><ul><li>PO source</li><li>Invoice items</li><li>Payment status</li></ul></div>
+        <div class="node service"><strong>Audit</strong><ul><li>ActivityLog</li><li>Notification</li><li>EmailLog</li></ul></div>
+        <div class="node service"><strong>Reports</strong><ul><li>Monthly spend</li><li>Vendor performance</li><li>RFQ summary</li><li>CSV export</li></ul></div>
+        <div class="node external"><strong>Documents</strong><ul><li>PO PDFs</li><li>Invoice PDFs</li><li>Email delivery</li></ul></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h2>5. API Sequence</h2>
+        <span>Main transaction path from user setup to document email</span>
+      </div>
+      <div class="diagram grid sequence">
+        <div class="lane">
+          <h3>Admin</h3>
+          <div class="rail">
+            <div class="event"><strong>POST /api/users</strong>Create internal user with validated role, phone, password.</div>
+            <div class="event"><strong>POST /api/products</strong>Create catalog products with category, unit, and GST.</div>
+            <div class="event"><strong>PUT /api/password-reset-requests/:id</strong>Approve or reject reset requests.</div>
+          </div>
+        </div>
+        <div class="lane">
+          <h3>Officer</h3>
+          <div class="rail">
+            <div class="event"><strong>POST /api/rfqs</strong>Create product-based RFQ with vendors per item.</div>
+            <div class="event"><strong>POST /api/rfqs/:id/send</strong>Move RFQ to SENT and notify vendors.</div>
+            <div class="event"><strong>POST /api/rfqs/:id/best-quote</strong>Calculate cheapest item-vendor combination.</div>
+            <div class="event"><strong>POST /api/purchase-orders/generate</strong>Create vendor-wise POs after approval.</div>
+          </div>
+        </div>
+        <div class="lane">
+          <h3>Vendor</h3>
+          <div class="rail">
+            <div class="event"><strong>GET /vendor/rfqs/:id</strong>Ownership check using linked vendorId and item assignments.</div>
+            <div class="event"><strong>POST /api/quotations</strong>Submit assigned item pricing, GST, and delivery days.</div>
+            <div class="event"><strong>PUT /api/purchase-orders/:id/status</strong>Advance own delivery progress.</div>
+          </div>
+        </div>
+        <div class="lane">
+          <h3>Manager</h3>
+          <div class="rail">
+            <div class="event"><strong>GET /api/reports/*</strong>Review spend, vendor performance, RFQ summary.</div>
+            <div class="event"><strong>PUT /api/approvals/:id/approve</strong>Approve selected item-vendor combination.</div>
+            <div class="event"><strong>PUT /api/invoices/:id/payment-status</strong>Track invoice payment state.</div>
+          </div>
+        </div>
+        <div class="lane">
+          <h3>Documents</h3>
+          <div class="rail">
+            <div class="event"><strong>GET /api/purchase-orders/:id/pdf</strong>Stream purchase order PDF.</div>
+            <div class="event"><strong>GET /api/invoices/:id/pdf</strong>Stream invoice PDF.</div>
+            <div class="event"><strong>Email endpoints</strong>Send through Brevo and store EmailLog.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h2>6. Security and Validation</h2>
+        <span>Authentication, RBAC, vendor isolation, and workflow guards</span>
+      </div>
+      <div class="diagram grid security">
+        <div class="node client arrow"><strong>Request</strong><span>Bearer token from frontend Axios client.</span></div>
+        <div class="node gate arrow"><strong>JWT Valid?</strong><span>No token returns 401.</span></div>
+        <div class="node gate arrow"><strong>Role Allowed?</strong><span>authorize(...) returns 403.</span></div>
+        <div class="node gate arrow"><strong>Payload Valid?</strong><span>express-validator returns 422.</span></div>
+        <div class="node gate arrow"><strong>Vendor Owned?</strong><span>Vendor records checked with req.user.vendorId.</span></div>
+        <div class="node gate arrow"><strong>State Valid?</strong><span>Deadline, locks, approval, duplicate checks.</span></div>
+        <div class="node data-node"><strong>Transaction</strong><span>State change, log, and notification commit together.</span></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h2>7. Feature Surface</h2>
+        <span>Main branch capabilities</span>
+      </div>
+      <div class="diagram grid features">
+        <div class="node client"><strong>Authentication</strong><ul><li>Login/logout/me</li><li>Vendor signup</li><li>Forgot/reset password</li><li>Admin reset requests</li></ul></div>
+        <div class="node api"><strong>Master Data</strong><ul><li>Users</li><li>Vendors</li><li>Categories</li><li>Products with GST</li></ul></div>
+        <div class="node service"><strong>Workflow</strong><ul><li>Catalog RFQs</li><li>Assigned-item quotations</li><li>Best quote + approvals</li><li>Vendor-wise POs</li></ul></div>
+        <div class="node data-node"><strong>Operations</strong><ul><li>PDF documents</li><li>Email delivery</li><li>Notifications</li><li>Activity and email logs</li></ul></div>
+        <div class="node external"><strong>Reports</strong><ul><li>Dashboard summary</li><li>Monthly spend</li><li>Vendor performance</li><li>CSV export</li></ul></div>
+        <div class="node gate"><strong>Validation</strong><ul><li>Required fields</li><li>Phone format</li><li>UUID references</li><li>Status allowlists</li></ul></div>
+        <div class="node gate"><strong>Business Rules</strong><ul><li>One quote per RFQ/vendor</li><li>Assigned items priced</li><li>Approval before PO</li><li>Invoice on receipt</li></ul></div>
+        <div class="node service"><strong>Numbering</strong><ul><li>RFQ-YYYY-NNNN</li><li>QUO-YYYY-NNNN</li><li>PO-YYYY-NNNN</li><li>INV-YYYY-NNNN</li></ul></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h2>8. Four-User Access Matrix</h2>
+        <span>Conceptual demo roles mapped to backend-enforced capabilities</span>
+      </div>
+      <div class="diagram">
+        <table class="matrix">
+          <thead>
+            <tr><th>Capability</th><th>Admin</th><th>Manager</th><th>Officer</th><th>Vendor</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Manage internal users and access</td><td class="yes">Yes</td><td class="limited">Limited oversight</td><td class="no">No</td><td class="limited">Reset request</td></tr>
+            <tr><td>Manage product catalog</td><td class="yes">Yes</td><td class="limited">Review</td><td class="limited">Read</td><td class="no">No</td></tr>
+            <tr><td>Manage vendors and categories</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="limited">Read vendors</td><td class="no">No</td></tr>
+            <tr><td>Create and send catalog RFQs</td><td class="no">No</td><td class="limited">Review</td><td class="yes">Yes</td><td class="no">No</td></tr>
+            <tr><td>Submit quotations</td><td class="no">No</td><td class="no">No</td><td class="no">No</td><td class="yes">Assigned RFQs only</td></tr>
+            <tr><td>Compare quotations</td><td class="limited">Read</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="no">No</td></tr>
+            <tr><td>Approve selected item-vendor awards</td><td class="no">No</td><td class="yes">Yes</td><td class="no">No</td><td class="no">No</td></tr>
+            <tr><td>Generate vendor-wise POs and invoices</td><td class="no">No</td><td class="limited">Review</td><td class="yes">Yes</td><td class="no">No</td></tr>
+            <tr><td>Update delivery status</td><td class="limited">Oversight</td><td class="limited">Oversight</td><td class="yes">Internal statuses</td><td class="yes">Own progress</td></tr>
+            <tr><td>Update payment status</td><td class="no">No</td><td class="yes">Yes</td><td class="no">No</td><td class="no">No</td></tr>
+            <tr><td>View reports and exports</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="limited">Operational</td><td class="no">No</td></tr>
+            <tr><td>View own notifications/documents</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="limited">Own records only</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
