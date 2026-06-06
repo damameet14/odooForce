@@ -15,6 +15,8 @@ const handlers = (...items) => items.map((item) => typeof item === "function" &&
 const roleValues = ["ADMIN", "PROCUREMENT_OFFICER"];
 const userStatusValues = ["ACTIVE", "INACTIVE"];
 const vendorStatusValues = ["ACTIVE", "INACTIVE", "PENDING", "BLACKLISTED"];
+const poStatusValues = ["GENERATED", "SENT_TO_VENDOR", "ACKNOWLEDGED", "READY", "DISPATCHED", "DELIVERED", "COMPLETED", "CANCELLED"];
+const paymentStatusValues = ["UNPAID", "PARTIALLY_PAID", "PAID", "OVERDUE"];
 const userCreateValidators = [
   body("name").trim().notEmpty().withMessage("Name is required").isLength({ max: 120 }).withMessage("Name must be 120 characters or fewer"),
   body("email").trim().isEmail().withMessage("Valid email is required").normalizeEmail(),
@@ -37,9 +39,9 @@ const categoryValidators = [
 ];
 const vendorCreateValidators = [
   body("companyName").trim().notEmpty().withMessage("Company name is required").isLength({ max: 160 }).withMessage("Company name must be 160 characters or fewer"),
-  body("contactPerson").optional({ values: "falsy" }).trim().isLength({ max: 120 }).withMessage("Contact person must be 120 characters or fewer"),
+  body("contactPerson").trim().notEmpty().withMessage("Contact person is required").isLength({ max: 120 }).withMessage("Contact person must be 120 characters or fewer"),
   body("email").trim().isEmail().withMessage("Valid email is required").normalizeEmail(),
-  body("phone").optional({ values: "falsy" }).trim().isLength({ max: 30 }).withMessage("Phone must be 30 characters or fewer"),
+  body("phone").trim().notEmpty().withMessage("Phone is required").matches(/^[0-9]{10}$/).withMessage("Phone must be a 10-digit number"),
   body("address").optional({ values: "falsy" }).trim().isLength({ max: 500 }).withMessage("Address must be 500 characters or fewer"),
   body("gstNumber").optional({ values: "falsy" }).trim().isLength({ max: 40 }).withMessage("GST number must be 40 characters or fewer"),
   body("password").optional().isLength({ min: 8, max: 128 }).withMessage("Password must be between 8 and 128 characters"),
@@ -49,14 +51,66 @@ const vendorCreateValidators = [
 ];
 const vendorUpdateValidators = [
   body("companyName").optional().trim().notEmpty().withMessage("Company name cannot be empty").isLength({ max: 160 }).withMessage("Company name must be 160 characters or fewer"),
-  body("contactPerson").optional({ values: "falsy" }).trim().isLength({ max: 120 }).withMessage("Contact person must be 120 characters or fewer"),
+  body("contactPerson").optional().trim().notEmpty().withMessage("Contact person cannot be empty").isLength({ max: 120 }).withMessage("Contact person must be 120 characters or fewer"),
   body("email").optional().trim().isEmail().withMessage("Valid email is required").normalizeEmail(),
-  body("phone").optional({ values: "falsy" }).trim().isLength({ max: 30 }).withMessage("Phone must be 30 characters or fewer"),
+  body("phone").optional().trim().notEmpty().withMessage("Phone cannot be empty").matches(/^[0-9]{10}$/).withMessage("Phone must be a 10-digit number"),
   body("address").optional({ values: "falsy" }).trim().isLength({ max: 500 }).withMessage("Address must be 500 characters or fewer"),
   body("gstNumber").optional({ values: "falsy" }).trim().isLength({ max: 40 }).withMessage("GST number must be 40 characters or fewer"),
   body("categoryId").optional({ values: "falsy" }).isUUID().withMessage("Category is invalid"),
   body("status").optional().isIn(vendorStatusValues).withMessage("Status is invalid"),
   body("rating").optional({ values: "falsy" }).isFloat({ min: 0, max: 5 }).withMessage("Rating must be between 0 and 5"),
+];
+const rfqValidators = [
+  body("title").trim().notEmpty().withMessage("RFQ title is required").isLength({ max: 160 }).withMessage("RFQ title must be 160 characters or fewer"),
+  body("description").optional({ values: "falsy" }).trim().isLength({ max: 1000 }).withMessage("Description must be 1000 characters or fewer"),
+  body("deadline").isISO8601().withMessage("Valid quotation deadline is required"),
+  body("expectedDeliveryDate").optional({ values: "falsy" }).isISO8601().withMessage("Expected delivery date is invalid"),
+  body("vendorIds").optional().isArray().withMessage("Vendor selection must be an array"),
+  body("vendorIds.*").optional().isUUID().withMessage("Vendor selection contains an invalid vendor"),
+  body("items").isArray({ min: 1 }).withMessage("At least one RFQ item is required"),
+  body("items.*.itemName").trim().notEmpty().withMessage("Each RFQ item needs a name").isLength({ max: 160 }).withMessage("Item name must be 160 characters or fewer"),
+  body("items.*.quantity").isFloat({ gt: 0 }).withMessage("Each RFQ item quantity must be greater than zero"),
+  body("items.*.unit").trim().notEmpty().withMessage("Each RFQ item needs a unit").isLength({ max: 40 }).withMessage("Item unit must be 40 characters or fewer"),
+  body("items.*.specifications").optional({ values: "falsy" }).trim().isLength({ max: 500 }).withMessage("Specifications must be 500 characters or fewer"),
+];
+const quotationValidators = [
+  body("rfqId").isUUID().withMessage("RFQ is required"),
+  body("deliveryTimeline").trim().notEmpty().withMessage("Delivery timeline is required").isLength({ max: 80 }).withMessage("Delivery timeline must be 80 characters or fewer"),
+  body("paymentTerms").trim().notEmpty().withMessage("Payment terms are required").isLength({ max: 120 }).withMessage("Payment terms must be 120 characters or fewer"),
+  body("notes").optional({ values: "falsy" }).trim().isLength({ max: 1000 }).withMessage("Notes must be 1000 characters or fewer"),
+  body("discountAmount").optional({ values: "falsy" }).isFloat({ min: 0 }).withMessage("Discount must be zero or greater"),
+  body("items").isArray({ min: 1 }).withMessage("Quotation items are required"),
+  body("items.*.rfqItemId").isUUID().withMessage("Quotation item references are invalid"),
+  body("items.*.quantity").isFloat({ gt: 0 }).withMessage("Quotation quantity must be greater than zero"),
+  body("items.*.unitPrice").isFloat({ min: 0 }).withMessage("Unit price must be zero or greater"),
+  body("items.*.taxPercentage").optional({ values: "falsy" }).isFloat({ min: 0, max: 100 }).withMessage("Tax must be between 0 and 100"),
+  body("items.*.discount").optional({ values: "falsy" }).isFloat({ min: 0 }).withMessage("Line discount must be zero or greater"),
+];
+const quotationUpdateValidators = [
+  body("deliveryTimeline").optional().trim().notEmpty().withMessage("Delivery timeline cannot be empty").isLength({ max: 80 }).withMessage("Delivery timeline must be 80 characters or fewer"),
+  body("paymentTerms").optional().trim().notEmpty().withMessage("Payment terms cannot be empty").isLength({ max: 120 }).withMessage("Payment terms must be 120 characters or fewer"),
+  body("notes").optional({ values: "falsy" }).trim().isLength({ max: 1000 }).withMessage("Notes must be 1000 characters or fewer"),
+];
+const approvalReviewValidators = [
+  body("remarks").optional({ values: "falsy" }).trim().isLength({ max: 500 }).withMessage("Remarks must be 500 characters or fewer"),
+];
+const poGenerateValidators = [
+  body("approvalId").isUUID().withMessage("Approval is required"),
+  body("termsConditions").optional({ values: "falsy" }).trim().isLength({ max: 1000 }).withMessage("Terms must be 1000 characters or fewer"),
+];
+const poStatusValidators = [
+  body("status").isIn(poStatusValues).withMessage("Purchase order status is invalid"),
+  body("notes").optional({ values: "falsy" }).trim().isLength({ max: 500 }).withMessage("Notes must be 500 characters or fewer"),
+];
+const invoiceGenerateValidators = [
+  body("purchaseOrderId").isUUID().withMessage("Purchase order is required"),
+  body("dueDate").optional({ values: "falsy" }).isISO8601().withMessage("Due date is invalid"),
+];
+const paymentValidators = [
+  body("paymentStatus").isIn(paymentStatusValues).withMessage("Payment status is invalid"),
+];
+const emailRecipientValidators = [
+  body("email").optional({ values: "falsy" }).isEmail().withMessage("Recipient email is invalid").normalizeEmail(),
 ];
 
 /**
@@ -116,8 +170,8 @@ router.route("/vendors/:id").get(...handlers(...a("ADMIN", "PROCUREMENT_OFFICER"
  *     security: [{ bearerAuth: [] }]
  *     responses: { 201: { description: RFQ created } }
  */
-router.route("/rfqs").get(protect, asyncHandler(rfq.list)).post(...handlers(...a("PROCUREMENT_OFFICER"), body("title").notEmpty(), body("deadline").isISO8601(), body("items").isArray({ min: 1 }), validate, rfq.create));
-router.route("/rfqs/:id").get(protect, asyncHandler(rfq.get)).put(...handlers(...a("PROCUREMENT_OFFICER"), rfq.update)).delete(...handlers(...a("PROCUREMENT_OFFICER"), rfq.remove));
+router.route("/rfqs").get(protect, asyncHandler(rfq.list)).post(...handlers(...a("PROCUREMENT_OFFICER"), ...rfqValidators, validate, rfq.create));
+router.route("/rfqs/:id").get(protect, asyncHandler(rfq.get)).put(...handlers(...a("PROCUREMENT_OFFICER"), ...rfqValidators, validate, rfq.update)).delete(...handlers(...a("PROCUREMENT_OFFICER"), rfq.remove));
 router.post("/rfqs/:id/send", ...handlers(...a("PROCUREMENT_OFFICER"), rfq.send));
 router.route("/rfqs/:id/vendors").get(...handlers(...a("ADMIN", "PROCUREMENT_OFFICER"), rfq.listVendors)).post(...handlers(...a("PROCUREMENT_OFFICER"), body("vendorIds").isArray({ min: 1 }), validate, rfq.assignVendors));
 router.get("/vendor/rfqs", ...handlers(...a("VENDOR"), rfq.list));
@@ -132,17 +186,17 @@ router.get("/vendor/rfqs/:id", ...handlers(...a("VENDOR"), rfq.get));
  *     security: [{ bearerAuth: [] }]
  *     responses: { 201: { description: Quotation submitted } }
  */
-router.post("/quotations", ...handlers(...a("VENDOR"), body("rfqId").isUUID(), body("items").isArray({ min: 1 }), validate, flow.submitQuotation));
-router.route("/quotations/:id").get(protect, asyncHandler(flow.getQuotation)).put(...handlers(...a("VENDOR"), flow.updateQuotation));
+router.post("/quotations", ...handlers(...a("VENDOR"), ...quotationValidators, validate, flow.submitQuotation));
+router.route("/quotations/:id").get(protect, asyncHandler(flow.getQuotation)).put(...handlers(...a("VENDOR"), ...quotationUpdateValidators, validate, flow.updateQuotation));
 router.get("/rfqs/:rfqId/quotations", ...handlers(...a("ADMIN", "PROCUREMENT_OFFICER", "FINANCE_OFFICER"), flow.listQuotations));
 router.get("/rfqs/:rfqId/quotations/compare", ...handlers(...a("PROCUREMENT_OFFICER", "FINANCE_OFFICER"), flow.compareQuotations));
 router.post("/rfqs/:rfqId/quotations/:quotationId/select", ...handlers(...a("PROCUREMENT_OFFICER"), flow.selectQuotation));
 
 router.get("/approvals", ...handlers(...a("ADMIN", "PROCUREMENT_OFFICER", "FINANCE_OFFICER"), flow.listApprovals));
 router.get("/approvals/:id", ...handlers(...a("ADMIN", "PROCUREMENT_OFFICER", "FINANCE_OFFICER"), flow.getApproval));
-router.put("/approvals/:id/approve", ...handlers(...a("FINANCE_OFFICER"), flow.reviewApproval("APPROVED")));
-router.put("/approvals/:id/reject", ...handlers(...a("FINANCE_OFFICER"), flow.reviewApproval("REJECTED")));
-router.put("/approvals/:id/revision-requested", ...handlers(...a("FINANCE_OFFICER"), flow.reviewApproval("REVISION_REQUESTED")));
+router.put("/approvals/:id/approve", ...handlers(...a("FINANCE_OFFICER"), ...approvalReviewValidators, validate, flow.reviewApproval("APPROVED")));
+router.put("/approvals/:id/reject", ...handlers(...a("FINANCE_OFFICER"), ...approvalReviewValidators, validate, flow.reviewApproval("REJECTED")));
+router.put("/approvals/:id/revision-requested", ...handlers(...a("FINANCE_OFFICER"), ...approvalReviewValidators, validate, flow.reviewApproval("REVISION_REQUESTED")));
 
 /**
  * @swagger
@@ -154,14 +208,14 @@ router.put("/approvals/:id/revision-requested", ...handlers(...a("FINANCE_OFFICE
  *     responses: { 201: { description: Purchase order generated }, 409: { description: Approval required } }
  */
 router.get("/purchase-orders", protect, asyncHandler(flow.listPos));
-router.post("/purchase-orders/generate", ...handlers(...a("PROCUREMENT_OFFICER"), body("approvalId").isUUID(), validate, flow.generatePo));
+router.post("/purchase-orders/generate", ...handlers(...a("PROCUREMENT_OFFICER"), ...poGenerateValidators, validate, flow.generatePo));
 router.get("/purchase-orders/:id", protect, asyncHandler(flow.getPo));
-router.put("/purchase-orders/:id/status", ...handlers(...a("ADMIN", "PROCUREMENT_OFFICER", "VENDOR"), flow.updatePoStatus));
+router.put("/purchase-orders/:id/status", ...handlers(...a("ADMIN", "PROCUREMENT_OFFICER", "VENDOR"), ...poStatusValidators, validate, flow.updatePoStatus));
 router.get("/purchase-orders/:id/pdf", protect, asyncHandler(flow.poPdf));
-router.post("/purchase-orders/:id/email", ...handlers(...a("ADMIN", "PROCUREMENT_OFFICER"), flow.emailPo));
+router.post("/purchase-orders/:id/email", ...handlers(...a("ADMIN", "PROCUREMENT_OFFICER"), ...emailRecipientValidators, validate, flow.emailPo));
 router.get("/deliveries", protect, asyncHandler(async (req, res) => res.json(await require("../config/db").delivery.findMany({ where: req.user.role === "VENDOR" ? { vendorId: req.user.vendorId } : {}, include: { purchaseOrder: true, vendor: true } }))));
 router.get("/purchase-orders/:poId/delivery", protect, asyncHandler(async (req, res) => res.json(await require("../config/db").delivery.findUnique({ where: { purchaseOrderId: req.params.poId } }))));
-router.put("/purchase-orders/:poId/delivery/status", ...a("ADMIN", "PROCUREMENT_OFFICER", "VENDOR"), (req, _res, next) => { req.params.id = req.params.poId; next(); }, asyncHandler(flow.updatePoStatus));
+router.put("/purchase-orders/:poId/delivery/status", ...a("ADMIN", "PROCUREMENT_OFFICER", "VENDOR"), ...poStatusValidators, validate, (req, _res, next) => { req.params.id = req.params.poId; next(); }, asyncHandler(flow.updatePoStatus));
 
 /**
  * @swagger
@@ -173,11 +227,11 @@ router.put("/purchase-orders/:poId/delivery/status", ...a("ADMIN", "PROCUREMENT_
  *     responses: { 201: { description: Invoice generated } }
  */
 router.get("/invoices", protect, asyncHandler(flow.listInvoices));
-router.post("/invoices/generate", ...handlers(...a("PROCUREMENT_OFFICER"), body("purchaseOrderId").isUUID(), validate, flow.generateInvoice));
+router.post("/invoices/generate", ...handlers(...a("PROCUREMENT_OFFICER"), ...invoiceGenerateValidators, validate, flow.generateInvoice));
 router.get("/invoices/:id", protect, asyncHandler(flow.getInvoice));
-router.put("/invoices/:id/payment-status", ...handlers(...a("FINANCE_OFFICER"), flow.updatePayment));
+router.put("/invoices/:id/payment-status", ...handlers(...a("FINANCE_OFFICER"), ...paymentValidators, validate, flow.updatePayment));
 router.get("/invoices/:id/pdf", protect, asyncHandler(flow.invoicePdf));
-router.post("/invoices/:id/email", ...handlers(...a("ADMIN", "PROCUREMENT_OFFICER", "FINANCE_OFFICER"), flow.emailInvoice));
+router.post("/invoices/:id/email", ...handlers(...a("ADMIN", "PROCUREMENT_OFFICER", "FINANCE_OFFICER"), ...emailRecipientValidators, validate, flow.emailInvoice));
 
 router.get("/activity-logs", ...handlers(...a("ADMIN", "PROCUREMENT_OFFICER"), report.activityLogs));
 router.get("/activity-logs/:id", ...handlers(...a("ADMIN", "PROCUREMENT_OFFICER"), report.activityLog));
