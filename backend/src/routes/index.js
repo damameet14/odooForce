@@ -32,7 +32,8 @@ router.post("/auth/login", ...handlers(body("email").isEmail(), body("password")
 router.post("/auth/signup", ...handlers(body("name").notEmpty(), body("email").isEmail(), body("password").isLength({ min: 8 }), validate, auth.signup));
 router.get("/auth/me", protect, asyncHandler(auth.me));
 router.post("/auth/logout", protect, asyncHandler(auth.logout));
-router.post("/auth/forgot-password", asyncHandler(auth.forgotPassword));
+router.post("/auth/forgot-password", ...handlers(body("email").isEmail(), validate, auth.forgotPassword));
+router.post("/auth/reset-password", ...handlers(body("token").notEmpty(), body("password").isLength({ min: 8 }), validate, auth.resetPassword));
 
 /**
  * @swagger

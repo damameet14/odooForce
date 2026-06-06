@@ -5,6 +5,7 @@ const { logActivity } = require("../services/activityLog.service");
 const { notify, notifyRole } = require("../services/notification.service");
 const { streamDocument } = require("../services/pdf.service");
 const { sendEmail } = require("../services/email.service");
+const templates = require("../utils/emailTemplates");
 
 const poInclude = { vendor: true, rfq: true, quotation: true, items: true, delivery: true, invoices: true };
 const invoiceInclude = { vendor: true, purchaseOrder: true, items: true };
@@ -141,7 +142,7 @@ exports.updatePoStatus = async (req, res) => {
   }); res.json(updated);
 };
 exports.poPdf = async (req, res) => { const po = await prisma.purchaseOrder.findUniqueOrThrow({ where: { id: req.params.id }, include: poInclude }); ensureVendorOwns(req, po.vendorId); streamDocument(res, "Purchase Order", po); };
-exports.emailPo = async (req, res) => { const po = await prisma.purchaseOrder.findUniqueOrThrow({ where: { id: req.params.id }, include: { vendor: true } }); res.json(await sendEmail({ entityType: "PURCHASE_ORDER", entityId: po.id, recipientEmail: req.body.email || po.vendor.email, subject: `Purchase Order ${po.poNumber}`, text: `Your purchase order ${po.poNumber} has been generated.` })); };
+exports.emailPo = async (req, res) => { const po = await prisma.purchaseOrder.findUniqueOrThrow({ where: { id: req.params.id }, include: { vendor: true } }); res.json(await sendEmail({ entityType: "PURCHASE_ORDER", entityId: po.id, to: req.body.email || po.vendor.email, ...templates.purchaseOrderEmail(po) })); };
 
 exports.generateInvoice = async (req, res) => {
   const po = await prisma.purchaseOrder.findUniqueOrThrow({ where: { id: req.body.purchaseOrderId }, include: { items: true, vendor: true } });
@@ -156,5 +157,4 @@ exports.listInvoices = async (req, res) => res.json(await prisma.invoice.findMan
 exports.getInvoice = async (req, res) => { const invoice = await prisma.invoice.findUniqueOrThrow({ where: { id: req.params.id }, include: invoiceInclude }); ensureVendorOwns(req, invoice.vendorId); res.json(invoice); };
 exports.updatePayment = async (req, res) => res.json(await prisma.invoice.update({ where: { id: req.params.id }, data: { paymentStatus: req.body.paymentStatus } }));
 exports.invoicePdf = async (req, res) => { const invoice = await prisma.invoice.findUniqueOrThrow({ where: { id: req.params.id }, include: invoiceInclude }); ensureVendorOwns(req, invoice.vendorId); streamDocument(res, "Invoice", invoice); };
-exports.emailInvoice = async (req, res) => { const invoice = await prisma.invoice.findUniqueOrThrow({ where: { id: req.params.id }, include: { vendor: true } }); res.json(await sendEmail({ entityType: "INVOICE", entityId: invoice.id, recipientEmail: req.body.email || invoice.vendor.email, subject: `Invoice ${invoice.invoiceNumber}`, text: `Invoice ${invoice.invoiceNumber} has been generated.` })); };
-
+exports.emailInvoice = async (req, res) => { const invoice = await prisma.invoice.findUniqueOrThrow({ where: { id: req.params.id }, include: { vendor: true } }); res.json(await sendEmail({ entityType: "INVOICE", entityId: invoice.id, to: req.body.email || invoice.vendor.email, ...templates.invoiceEmail(invoice) })); };

@@ -2,6 +2,8 @@ const bcrypt = require("bcryptjs");
 const prisma = require("../config/db");
 const ApiError = require("../utils/ApiError");
 const { logActivity } = require("../services/activityLog.service");
+const { sendEmail, EmailDeliveryError } = require("../services/email.service");
+const templates = require("../utils/emailTemplates");
 
 const pageArgs = (req) => ({ skip: Math.max(0, Number(req.query.page || 1) - 1) * Number(req.query.limit || 25), take: Math.min(100, Number(req.query.limit || 25)) });
 const userSelect = { id: true, name: true, email: true, phone: true, role: true, status: true, createdAt: true, updatedAt: true };
@@ -27,7 +29,14 @@ exports.updateUser = async (req, res) => {
   };
   res.json(await prisma.user.update({ where: { id: req.params.id }, data, select: userSelect }));
 };
-exports.deleteUser = async (req, res) => res.json(await prisma.user.update({ where: { id: req.params.id }, data: { status: "INACTIVE" } }));
+exports.deleteUser = async (req, res) => {
+  const user = await prisma.user.update({ where: { id: req.params.id }, data: { status: "INACTIVE" } });
+  sendEmail({ to: user.email, entityType: "USER", entityId: user.id, ...templates.accountDeletedEmail(user) }).catch((error) => {
+    const reason = error instanceof EmailDeliveryError ? error.message : "Email delivery failed";
+    console.error("Account deletion email skipped", { userId: user.id, reason });
+  });
+  res.json(user);
+};
 
 exports.listCategories = async (_req, res) => res.json(await prisma.vendorCategory.findMany({ orderBy: { name: "asc" }, include: { _count: { select: { vendors: true } } } }));
 exports.createCategory = async (req, res) => res.status(201).json(await prisma.vendorCategory.create({ data: req.body }));

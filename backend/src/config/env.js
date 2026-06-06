@@ -8,7 +8,4 @@ exports.validateEnvironment = () => {
     throw new ApiError(500, "DATABASE_URL must be a PostgreSQL connection URL");
   }
   if (process.env.JWT_SECRET.length < 32) throw new ApiError(500, "JWT_SECRET must be at least 32 characters");
-  if (Boolean(process.env.EMAIL_USER) !== Boolean(process.env.EMAIL_PASS)) {
-    throw new ApiError(500, "EMAIL_USER and EMAIL_PASS must be configured together");
-  }
 };
