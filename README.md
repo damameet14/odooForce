@@ -1,4 +1,4 @@
-# VendorBridge
+# OdooForce
 
 Full-stack procurement and vendor management ERP built with React, Express, Prisma, and PostgreSQL.
 
@@ -48,7 +48,7 @@ Full-stack procurement and vendor management ERP built with React, Express, Pris
 
 The seed script only ensures the admin account and role definitions exist. By default, the admin credential is:
 
-- `admin@vendorbridge.com`
+- `admin@odooforce.com`
 - `password123`
 
 Override this locally with `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` when needed. Replace the default admin password before production use.

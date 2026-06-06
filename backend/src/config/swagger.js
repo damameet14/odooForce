@@ -4,7 +4,7 @@ module.exports = swaggerJsdoc({
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "VendorBridge API",
+      title: "OdooForce API",
       version: "1.0.0",
       description: "Procurement and Vendor Management ERP API documentation",
     },
@@ -18,7 +18,7 @@ module.exports = swaggerJsdoc({
           type: "object",
           required: ["email", "password"],
           properties: {
-            email: { type: "string", example: "admin@vendorbridge.com" },
+            email: { type: "string", example: "admin@odooforce.com" },
             password: { type: "string", example: "your_admin_password" },
           },
         },

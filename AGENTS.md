@@ -1,10 +1,10 @@
 # AGENTS.md
 
-This file defines the working rules for coding agents and collaborators contributing to VendorBridge. Follow it for every change unless a task explicitly provides stricter instructions.
+This file defines the working rules for coding agents and collaborators contributing to OdooForce. Follow it for every change unless a task explicitly provides stricter instructions.
 
 ## Project Purpose
 
-VendorBridge is a role-based procurement and vendor management ERP. Its core workflow is:
+OdooForce is a role-based procurement and vendor management ERP. Its core workflow is:
 
 `RFQ creation -> vendor invitation -> quotation submission -> quotation comparison -> finance approval -> purchase order -> delivery tracking -> invoice`
 

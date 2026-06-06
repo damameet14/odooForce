@@ -18,7 +18,7 @@ app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({ origin: process.env.FRONTEND_URL.split(",").map((value) => value.trim()), credentials: true }));
 app.use(express.json({ limit: "2mb" }));
 app.use(morgan("dev"));
-app.get("/health", (_req, res) => res.json({ status: "ok", service: "VendorBridge API" }));
+app.get("/health", (_req, res) => res.json({ status: "ok", service: "OdooForce API" }));
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api/auth", rateLimit({ windowMs: 15 * 60 * 1000, limit: 100, standardHeaders: "draft-8", legacyHeaders: false }));
 app.use("/api", rateLimit({ windowMs: 15 * 60 * 1000, limit: 1000, standardHeaders: "draft-8", legacyHeaders: false }));

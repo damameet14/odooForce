@@ -2,7 +2,7 @@ const app = require("./app");
 const prisma = require("./config/db");
 
 const port = process.env.PORT || 5000;
-const server = app.listen(port, () => console.log(`VendorBridge API running on http://localhost:${port}`));
+const server = app.listen(port, () => console.log(`OdooForce API running on http://localhost:${port}`));
 
 const shutdown = async () => {
   await prisma.$disconnect();

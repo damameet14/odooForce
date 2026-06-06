@@ -3,7 +3,7 @@ const bcrypt = require("bcryptjs");
 const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
-const adminEmail = process.env.SEED_ADMIN_EMAIL || "admin@vendorbridge.com";
+const adminEmail = process.env.SEED_ADMIN_EMAIL || "admin@odooforce.com";
 const adminPassword = process.env.SEED_ADMIN_PASSWORD || "password123";
 
 // ─── Indian Grocery Store Categories & Products ─────────────────────────────
@@ -221,7 +221,7 @@ async function main() {
 
   const totalProducts = categories.reduce((sum, cat) => sum + cat.products.length, 0);
   console.log(`\n✅ Seeded ${categories.length} categories and ${totalProducts} products`);
-  console.log(`\n🎉 VendorBridge seed complete!`);
+  console.log(`\n🎉 OdooForce seed complete!`);
   console.log(`   Admin: ${adminEmail} / ${adminPassword.slice(0, 4)}****`);
 }
 

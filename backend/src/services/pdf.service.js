@@ -1,17 +1,16 @@
 const PDFDocument = require("pdfkit");
 
 const money = (value) => `INR ${Number(value || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
-const BRAND_GREEN = "#167d71";
-const BRAND_DARK = "#10282a";
+const BRAND_CORAL = "#e85a4f";
+const BRAND_DARK = "#17233c";
 const TEXT_GRAY = "#637775";
 
 function drawHeader(doc, type, number, date) {
   doc.rect(0, 0, doc.page.width, 80).fill(BRAND_DARK);
-  doc.fontSize(18).fillColor("#e9b44c").text("VB", 48, 25, { continued: true })
-    .fillColor("#fff").fontSize(14).text(`  VendorBridge`, { continued: false });
-  doc.fontSize(11).fillColor("#8fa6a5").text("Procurement ERP", doc.page.width - 200, 28, { width: 150, align: "right" });
+  doc.fontSize(14).fillColor("#fff").text("OdooForce", 48, 30, { continued: false });
+  doc.fontSize(11).fillColor("#8e8d8a").text("Procurement ERP", doc.page.width - 200, 28, { width: 150, align: "right" });
   doc.moveDown(2.5);
-  doc.fontSize(20).fillColor(BRAND_GREEN).text(type, 48, 100, { align: "center" });
+  doc.fontSize(20).fillColor(BRAND_CORAL).text(type, 48, 100, { align: "center" });
   doc.fontSize(12).fillColor(BRAND_DARK).text(number, { align: "center" });
   doc.fontSize(9).fillColor(TEXT_GRAY).text(`Date: ${date}`, { align: "center" });
   doc.moveDown(1);
@@ -68,7 +67,7 @@ function drawTotals(doc, totals) {
   for (let i = 0; i < totals.length; i++) {
     const ty = y + 6 + i * 18;
     const isLast = i === totals.length - 1;
-    doc.fontSize(isLast ? 10 : 8).fillColor(isLast ? BRAND_GREEN : TEXT_GRAY)
+    doc.fontSize(isLast ? 10 : 8).fillColor(isLast ? BRAND_CORAL : TEXT_GRAY)
       .text(totals[i].label, x + 8, ty, { width: 90 })
       .text(totals[i].value, x + 100, ty, { width: 90, align: "right" });
   }

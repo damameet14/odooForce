@@ -1,6 +1,6 @@
 # odooForce Technical Diagrams
 
-Professional technical views for the current main branch of the VendorBridge / odooForce procurement ERP.
+Professional technical views for the current main branch of the OdooForce procurement ERP.
 
 Open [TECHNICAL_DIAGRAMS.html](TECHNICAL_DIAGRAMS.html) in a browser for a presentation-ready visual version.
 
@@ -8,7 +8,7 @@ Open [TECHNICAL_DIAGRAMS.html](TECHNICAL_DIAGRAMS.html) in a browser for a prese
 
 ```mermaid
 flowchart LR
-  Admin["Admin<br/>Users, products, categories, reset requests"] --> Platform["VendorBridge ERP Platform"]
+  Admin["Admin<br/>Users, products, categories, reset requests"] --> Platform["OdooForce ERP Platform"]
   Manager["Manager<br/>Vendor oversight, approvals, reports, payments"] --> Platform
   Officer["Officer<br/>Catalog RFQs, item awards, POs, invoices, delivery receipt"] --> Platform
   Vendor["Vendor<br/>Assigned RFQs, own quotations, own POs/invoices"] --> Platform
@@ -17,7 +17,7 @@ flowchart LR
   Isolation --> Workflow["Auditable catalog-to-invoice workflow"]
 
   classDef role fill:#e8f4ff,stroke:#2563eb,color:#102a43
-  classDef core fill:#edf7f4,stroke:#167d71,color:#123c3a
+  classDef core fill:#edf7f4,stroke:#e85a4f,color:#123c3a
   classDef guard fill:#fff7e6,stroke:#b7791f,color:#4a3200
   class Admin,Manager,Officer,Vendor role
   class Platform,Workflow core
@@ -77,7 +77,7 @@ flowchart TB
   Prisma --> Postgres
 
   classDef client fill:#e8f4ff,stroke:#2563eb,color:#102a43
-  classDef api fill:#edf7f4,stroke:#167d71,color:#123c3a
+  classDef api fill:#edf7f4,stroke:#e85a4f,color:#123c3a
   classDef service fill:#fff7e6,stroke:#b7791f,color:#4a3200
   classDef data fill:#f3edff,stroke:#6d28d9,color:#2e1065
   classDef external fill:#fff1f2,stroke:#be123c,color:#4c0519
@@ -134,7 +134,7 @@ flowchart LR
   Decision -.-> Notices
 
   classDef actor fill:#e8f4ff,stroke:#2563eb
-  classDef step fill:#edf7f4,stroke:#167d71
+  classDef step fill:#edf7f4,stroke:#e85a4f
   classDef gate fill:#fff7e6,stroke:#b7791f
   classDef fail fill:#fff1f2,stroke:#be123c
   classDef audit fill:#f3edff,stroke:#6d28d9

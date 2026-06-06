@@ -1,4 +1,4 @@
-const appName = "VendorBridge";
+const appName = "OdooForce";
 
 const escapeHtml = (value) =>
   String(value || "")
@@ -11,23 +11,22 @@ const escapeHtml = (value) =>
 const money = (v) => `₹${Number(v || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
 
 const brandHeader = `
-  <div style="background:#10282a;padding:20px 28px;border-radius:8px 8px 0 0">
+  <div style="background:#17233c;padding:20px 28px;border-radius:8px 8px 0 0">
     <table width="100%"><tr>
-      <td><span style="display:inline-block;background:#e9b44c;color:#14292b;font-weight:800;padding:6px 10px;border-radius:5px;font-size:14px">VB</span>
-      <span style="color:#fff;font-size:16px;font-weight:700;margin-left:8px">${appName}</span></td>
-      <td style="text-align:right;color:#8fa6a5;font-size:11px">Procurement ERP</td>
+      <td><span style="color:#fff;font-size:16px;font-weight:700">${appName}</span></td>
+      <td style="text-align:right;color:#8e8d8a;font-size:11px">Procurement ERP</td>
     </tr></table>
   </div>`;
 
 const wrapper = (content) => `
-  <div style="font-family:Arial,Helvetica,sans-serif;max-width:640px;margin:0 auto;background:#f3f6f6;padding:20px">
-    <div style="background:#fff;border-radius:8px;overflow:hidden;border:1px solid #dfe7e6">
+  <div style="font-family:Inter,Arial,Helvetica,sans-serif;max-width:640px;margin:0 auto;background:#f8f6ef;padding:20px">
+    <div style="background:#fff;border-radius:8px;overflow:hidden;border:1px solid #ded8ca">
       ${brandHeader}
       <div style="padding:24px 28px;color:#172033;line-height:1.6;font-size:13px">
         ${content}
       </div>
     </div>
-    <p style="text-align:center;color:#8fa6a5;font-size:10px;margin-top:12px">${appName} · Automated notification</p>
+    <p style="text-align:center;color:#8e8d8a;font-size:10px;margin-top:12px">${appName} · Automated notification</p>
   </div>`;
 
 const itemTable = (headers, rows) => `
@@ -73,7 +72,7 @@ exports.passwordResetEmail = (user, resetUrl) =>
     title: `${appName} password reset`,
     body: [
       `Hi ${escapeHtml(user.name)},`,
-      `Use this secure link to reset your password: <a href="${escapeHtml(resetUrl)}" style="color:#167d71">${escapeHtml(resetUrl)}</a>`,
+      `Use this secure link to reset your password: <a href="${escapeHtml(resetUrl)}" style="color:#e85a4f">${escapeHtml(resetUrl)}</a>`,
       "If you did not request this reset, you can ignore this email.",
     ],
   });
@@ -141,7 +140,7 @@ exports.rfqInviteEmail = (rfq, vendorItems, vendor) => {
 
   return {
     subject: `New RFQ: ${rfq.rfqNumber} — ${rfq.title}`,
-    text: `Dear ${vendor.companyName},\n\nYou have been invited to quote on RFQ ${rfq.rfqNumber}: ${rfq.title}.\n\nItems:\n${vendorItems.map((item, i) => `${i + 1}. ${item.itemName} — ${item.quantity} ${item.unit}`).join("\n")}\n\nPlease log in to VendorBridge to submit your quotation.`,
+    text: `Dear ${vendor.companyName},\n\nYou have been invited to quote on RFQ ${rfq.rfqNumber}: ${rfq.title}.\n\nItems:\n${vendorItems.map((item, i) => `${i + 1}. ${item.itemName} — ${item.quantity} ${item.unit}`).join("\n")}\n\nPlease log in to OdooForce to submit your quotation.`,
     html: wrapper(`
       <h2 style="margin:0 0 6px;font-size:18px;color:#172033">New Request for Quotation</h2>
       <p style="color:#718180;font-size:12px;margin:0 0 16px">${escapeHtml(rfq.rfqNumber)} · ${escapeHtml(rfq.title)}</p>
@@ -178,7 +177,7 @@ exports.quotationReceivedEmail = (quotation, rfq) => {
         <table width="100%">
           <tr><td style="font-size:12px;color:#637775">Subtotal</td><td style="text-align:right;font-weight:600">${money(quotation.subtotal)}</td></tr>
           <tr><td style="font-size:12px;color:#637775">Tax</td><td style="text-align:right;font-weight:600">${money(quotation.taxAmount)}</td></tr>
-          <tr><td style="font-size:13px;font-weight:700">Grand Total</td><td style="text-align:right;font-weight:700;font-size:14px;color:#167d71">${money(quotation.grandTotal)}</td></tr>
+          <tr><td style="font-size:13px;font-weight:700">Grand Total</td><td style="text-align:right;font-weight:700;font-size:14px;color:#e85a4f">${money(quotation.grandTotal)}</td></tr>
         </table>
       </div>
       <p style="font-size:11px;color:#718180;margin-top:12px">Delivery: ${escapeHtml(quotation.deliveryTimeline || (quotation.deliveryDays + " days"))}</p>
@@ -209,9 +208,9 @@ exports.approvalRequestEmail = (rfq, selectedItems) => {
       <p style="color:#718180;font-size:12px;margin:0 0 16px">${escapeHtml(rfq.rfqNumber)} · ${escapeHtml(rfq.title)}</p>
       <p>The procurement team has selected the following quotes for your review:</p>
       ${itemTable(["#", "Item", "Vendor", "Qty", "Unit Price", "GST", "Total"], rows)}
-      <div style="background:#e9f4f1;padding:14px;border-radius:5px;text-align:right">
+      <div style="background:#fdf0ef;padding:14px;border-radius:5px;text-align:right">
         <span style="font-size:11px;color:#637775">Total Amount: </span>
-        <strong style="font-size:18px;color:#167d71">${money(total)}</strong>
+        <strong style="font-size:18px;color:#e85a4f">${money(total)}</strong>
       </div>
       <p style="margin-top:16px">Please log in to ${appName} to review and approve or reject this request.</p>
     `),
@@ -251,7 +250,7 @@ exports.purchaseOrderEmail = (po, vendor) => {
     html: wrapper(`
       <div style="text-align:center;margin-bottom:16px">
         <h2 style="margin:0;font-size:20px;color:#153e75">PURCHASE ORDER</h2>
-        <p style="color:#167d71;font-weight:700;font-size:14px;margin:4px 0">${escapeHtml(po.poNumber)}</p>
+        <p style="color:#e85a4f;font-weight:700;font-size:14px;margin:4px 0">${escapeHtml(po.poNumber)}</p>
         <p style="color:#718180;font-size:11px;margin:0">Date: ${new Date(po.createdAt).toLocaleDateString("en-IN")}</p>
       </div>
       <div style="background:#f7f9f9;padding:12px;border-radius:5px;margin-bottom:14px">
@@ -265,7 +264,7 @@ exports.purchaseOrderEmail = (po, vendor) => {
         <table width="100%">
           <tr><td style="font-size:12px;color:#637775">Subtotal</td><td style="text-align:right">${money(po.subtotal)}</td></tr>
           <tr><td style="font-size:12px;color:#637775">Tax</td><td style="text-align:right">${money(po.taxAmount)}</td></tr>
-          <tr style="border-top:1px solid #dfe7e6"><td style="font-size:14px;font-weight:700;padding-top:8px">Grand Total</td><td style="text-align:right;font-weight:700;font-size:16px;color:#167d71;padding-top:8px">${money(po.grandTotal)}</td></tr>
+          <tr style="border-top:1px solid #dfe7e6"><td style="font-size:14px;font-weight:700;padding-top:8px">Grand Total</td><td style="text-align:right;font-weight:700;font-size:16px;color:#e85a4f;padding-top:8px">${money(po.grandTotal)}</td></tr>
         </table>
       </div>
       ${po.termsConditions ? `<p style="font-size:11px;color:#718180;margin-top:12px"><strong>Terms:</strong> ${escapeHtml(po.termsConditions)}</p>` : ""}
@@ -288,7 +287,7 @@ exports.invoiceGeneratedEmail = (invoice) => {
     subject: `Invoice ${invoice.invoiceNumber}`,
     text: `Invoice ${invoice.invoiceNumber} has been generated.\nGrand Total: ${money(invoice.grandTotal)}\nDue Date: ${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString("en-IN") : "N/A"}`,
     html: wrapper(`
-      <div style="background:#167d71;color:#fff;padding:16px;border-radius:5px;margin-bottom:14px">
+      <div style="background:#e85a4f;color:#fff;padding:16px;border-radius:5px;margin-bottom:14px">
         <table width="100%"><tr>
           <td><p style="margin:0;font-size:11px;opacity:.8">INVOICE</p><h2 style="margin:4px 0 0;font-size:20px">${escapeHtml(invoice.invoiceNumber)}</h2></td>
           <td style="text-align:right">
@@ -304,7 +303,7 @@ exports.invoiceGeneratedEmail = (invoice) => {
           <tr><td style="font-size:12px;color:#637775">Subtotal</td><td style="text-align:right">${money(invoice.subtotal)}</td></tr>
           <tr><td style="font-size:12px;color:#637775">Tax</td><td style="text-align:right">${money(invoice.taxAmount)}</td></tr>
           <tr><td style="font-size:12px;color:#637775">Discount</td><td style="text-align:right">${money(invoice.discountAmount)}</td></tr>
-          <tr style="border-top:2px solid #167d71"><td style="font-size:14px;font-weight:700;padding-top:8px">Total</td><td style="text-align:right;font-weight:700;font-size:16px;color:#167d71;padding-top:8px">${money(invoice.grandTotal)}</td></tr>
+          <tr style="border-top:2px solid #e85a4f"><td style="font-size:14px;font-weight:700;padding-top:8px">Total</td><td style="text-align:right;font-weight:700;font-size:16px;color:#e85a4f;padding-top:8px">${money(invoice.grandTotal)}</td></tr>
         </table>
       </div>
     `),

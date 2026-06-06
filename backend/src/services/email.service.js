@@ -19,10 +19,10 @@ const getBrevoClient = () => {
 };
 
 const parseSender = () => {
-  const from = process.env.EMAIL_FROM || "noreply@vendorbridge.local";
+  const from = process.env.EMAIL_FROM || "noreply@odooforce.local";
   const match = from.match(/^\s*(.*?)\s*<([^>]+)>\s*$/);
   return {
-    name: process.env.EMAIL_FROM_NAME || (match?.[1] || "VendorBridge").trim(),
+    name: process.env.EMAIL_FROM_NAME || (match?.[1] || "OdooForce").trim(),
     email: (match?.[2] || from).trim(),
   };
 };

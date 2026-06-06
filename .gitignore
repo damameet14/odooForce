@@ -10,3 +10,4 @@ uploads/
 .vscode/
 coverage/
 *.local
+ui
