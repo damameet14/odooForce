@@ -6,12 +6,14 @@
   <title>OF Logo Loader</title>
   <style>
     :root {
-      --bg: #070707;
-      --bg-glow: radial-gradient(circle at center, rgba(229, 9, 20, .16), transparent 58%);
-      --red: #e50914;
-      --deep-red: #8b0007;
-      --line-red: #ff4d57;
-      --line-dark: #c20b14;
+      --bg: #ffffff;
+      --bg-glow: none;
+      --red: #e07d74;
+      --deep-red: #11181c;
+      --line-red: #e4887d;
+      --line-dark: #141b1f;
+      --top-fill: #ffd9b7;
+      --body-fill: #de7d73;
       --size: min(42vw, 220px);
     }
 
@@ -49,7 +51,7 @@
       position: absolute;
       inset: 0;
       background: var(--bg-glow);
-      opacity: .9;
+      opacity: 0;
       pointer-events: none;
     }
 
@@ -59,13 +61,19 @@
       width: var(--size);
       aspect-ratio: 1;
       overflow: visible;
-      filter: drop-shadow(0 0 22px rgba(229, 9, 20, .14));
+      filter: none;
     }
 
     .logo-base path {
-      fill: var(--red);
-      opacity: .18;
+      fill: var(--body-fill);
+      opacity: .13;
       animation: logoPulse 3.2s ease-in-out infinite;
+    }
+
+    .logo-base .top-left,
+    .logo-base .top-right {
+      fill: var(--top-fill);
+      opacity: .18;
     }
 
     .logo-lines .piece {
@@ -73,7 +81,7 @@
       stroke: var(--line-red);
       stroke-linecap: round;
       stroke-linejoin: miter;
-      stroke-width: 5;
+      stroke-width: 3;
       stroke-dasharray: 100;
       stroke-dashoffset: 100;
       opacity: 0;
