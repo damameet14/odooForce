@@ -11,7 +11,7 @@ const userSelect = { id: true, name: true, email: true, phone: true, role: true,
 exports.listUsers = async (req, res) => res.json(await prisma.user.findMany({ ...pageArgs(req), orderBy: { createdAt: "desc" }, select: userSelect }));
 exports.createUser = async (req, res) => {
   const { name, email, password, role, phone, status } = req.body;
-  const user = await prisma.user.create({ data: { name, email: email.toLowerCase(), phone, role, status, passwordHash: await bcrypt.hash(password, 12) } });
+  const user = await prisma.user.create({ data: { name, email: email.toLowerCase(), phone: phone || null, role, status: status || undefined, passwordHash: await bcrypt.hash(password, 12) } });
   await logActivity({ userId: req.user.id, action: "USER_CREATED", entityType: "USER", entityId: user.id, description: `${req.user.name} created ${user.name}` });
   const { passwordHash, ...safe } = user;
   res.status(201).json(safe);
@@ -22,15 +22,24 @@ exports.updateUser = async (req, res) => {
   const data = {
     ...(name !== undefined && { name }),
     ...(email !== undefined && { email: email.toLowerCase() }),
-    ...(phone !== undefined && { phone }),
+    ...(phone !== undefined && { phone: phone || null }),
     ...(role !== undefined && { role }),
     ...(status !== undefined && { status }),
     ...(password && { passwordHash: await bcrypt.hash(password, 12) }),
   };
-  res.json(await prisma.user.update({ where: { id: req.params.id }, data, select: userSelect }));
+  const user = await prisma.$transaction(async (tx) => {
+    const updated = await tx.user.update({ where: { id: req.params.id }, data, select: userSelect });
+    await logActivity({ userId: req.user.id, action: "USER_UPDATED", entityType: "USER", entityId: updated.id, description: `${req.user.name} updated ${updated.name}` }, tx);
+    return updated;
+  });
+  res.json(user);
 };
 exports.deleteUser = async (req, res) => {
-  const user = await prisma.user.update({ where: { id: req.params.id }, data: { status: "INACTIVE" } });
+  const user = await prisma.$transaction(async (tx) => {
+    const updated = await tx.user.update({ where: { id: req.params.id }, data: { status: "INACTIVE" }, select: userSelect });
+    await logActivity({ userId: req.user.id, action: "USER_DEACTIVATED", entityType: "USER", entityId: updated.id, description: `${req.user.name} deactivated ${updated.name}` }, tx);
+    return updated;
+  });
   sendEmail({ to: user.email, entityType: "USER", entityId: user.id, ...templates.accountDeletedEmail(user) }).catch((error) => {
     const reason = error instanceof EmailDeliveryError ? error.message : "Email delivery failed";
     console.error("Account deletion email skipped", { userId: user.id, reason });
@@ -39,9 +48,15 @@ exports.deleteUser = async (req, res) => {
 };
 
 exports.listCategories = async (_req, res) => res.json(await prisma.vendorCategory.findMany({ orderBy: { name: "asc" }, include: { _count: { select: { vendors: true } } } }));
-exports.createCategory = async (req, res) => res.status(201).json(await prisma.vendorCategory.create({ data: req.body }));
+exports.createCategory = async (req, res) => {
+  const { name, description } = req.body;
+  res.status(201).json(await prisma.vendorCategory.create({ data: { name, description: description || null } }));
+};
 exports.getCategory = async (req, res) => res.json(await prisma.vendorCategory.findUniqueOrThrow({ where: { id: req.params.id } }));
-exports.updateCategory = async (req, res) => res.json(await prisma.vendorCategory.update({ where: { id: req.params.id }, data: req.body }));
+exports.updateCategory = async (req, res) => {
+  const { name, description } = req.body;
+  res.json(await prisma.vendorCategory.update({ where: { id: req.params.id }, data: { name, description: description || null } }));
+};
 exports.deleteCategory = async (req, res) => {
   const category = await prisma.vendorCategory.findUniqueOrThrow({ where: { id: req.params.id }, include: { _count: { select: { vendors: true } } } });
   if (category._count.vendors) throw new ApiError(409, "Category is in use");
@@ -62,8 +77,8 @@ exports.createVendor = async (req, res) => {
   if (createLogin && (!password || password.length < 8)) throw new ApiError(422, "A vendor login password of at least 8 characters is required");
   const vendor = await prisma.$transaction(async (tx) => {
     let user;
-    if (createLogin) user = await tx.user.create({ data: { name: contactPerson || companyName, email: email.toLowerCase(), phone, role: "VENDOR", passwordHash: await bcrypt.hash(password, 12) } });
-    const created = await tx.vendor.create({ data: { companyName, contactPerson, email: email.toLowerCase(), phone, address, gstNumber, categoryId: categoryId || null, status, rating, userId: user?.id } });
+    if (createLogin) user = await tx.user.create({ data: { name: contactPerson || companyName, email: email.toLowerCase(), phone: phone || null, role: "VENDOR", passwordHash: await bcrypt.hash(password, 12) } });
+    const created = await tx.vendor.create({ data: { companyName, contactPerson: contactPerson || null, email: email.toLowerCase(), phone: phone || null, address: address || null, gstNumber: gstNumber || null, categoryId: categoryId || null, status, rating: rating || 0, userId: user?.id } });
     await logActivity({ userId: req.user.id, action: "VENDOR_CREATED", entityType: "VENDOR", entityId: created.id, description: `${req.user.name} created vendor ${companyName}` }, tx);
     return created;
   });
@@ -74,11 +89,11 @@ exports.updateVendor = async (req, res) => {
   const { companyName, contactPerson, email, phone, address, gstNumber, categoryId, status, rating } = req.body;
   const data = {
     ...(companyName !== undefined && { companyName }),
-    ...(contactPerson !== undefined && { contactPerson }),
+    ...(contactPerson !== undefined && { contactPerson: contactPerson || null }),
     ...(email !== undefined && { email: email.toLowerCase() }),
-    ...(phone !== undefined && { phone }),
-    ...(address !== undefined && { address }),
-    ...(gstNumber !== undefined && { gstNumber }),
+    ...(phone !== undefined && { phone: phone || null }),
+    ...(address !== undefined && { address: address || null }),
+    ...(gstNumber !== undefined && { gstNumber: gstNumber || null }),
     ...(categoryId !== undefined && { categoryId: categoryId || null }),
     ...(status !== undefined && { status }),
     ...(rating !== undefined && { rating }),

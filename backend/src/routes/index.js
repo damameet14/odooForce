@@ -12,6 +12,52 @@ const report = require("../controllers/report.controller");
 const router = express.Router();
 const a = (...roles) => [protect, authorize(...roles)];
 const handlers = (...items) => items.map((item) => typeof item === "function" && item.constructor.name === "AsyncFunction" ? asyncHandler(item) : item);
+const roleValues = ["ADMIN", "PROCUREMENT_OFFICER", "FINANCE_OFFICER", "VENDOR"];
+const userStatusValues = ["ACTIVE", "INACTIVE"];
+const vendorStatusValues = ["ACTIVE", "INACTIVE", "PENDING", "BLACKLISTED"];
+const userCreateValidators = [
+  body("name").trim().notEmpty().withMessage("Name is required").isLength({ max: 120 }).withMessage("Name must be 120 characters or fewer"),
+  body("email").trim().isEmail().withMessage("Valid email is required").normalizeEmail(),
+  body("password").isLength({ min: 8, max: 128 }).withMessage("Password must be between 8 and 128 characters"),
+  body("role").isIn(roleValues).withMessage("Role is invalid"),
+  body("phone").optional({ values: "falsy" }).trim().isLength({ max: 30 }).withMessage("Phone must be 30 characters or fewer"),
+  body("status").optional({ values: "falsy" }).isIn(userStatusValues).withMessage("Status is invalid"),
+];
+const userUpdateValidators = [
+  body("name").optional().trim().notEmpty().withMessage("Name cannot be empty").isLength({ max: 120 }).withMessage("Name must be 120 characters or fewer"),
+  body("email").optional().trim().isEmail().withMessage("Valid email is required").normalizeEmail(),
+  body("password").optional({ values: "falsy" }).isLength({ min: 8, max: 128 }).withMessage("Password must be between 8 and 128 characters"),
+  body("role").optional().isIn(roleValues).withMessage("Role is invalid"),
+  body("phone").optional({ values: "falsy" }).trim().isLength({ max: 30 }).withMessage("Phone must be 30 characters or fewer"),
+  body("status").optional().isIn(userStatusValues).withMessage("Status is invalid"),
+];
+const categoryValidators = [
+  body("name").trim().notEmpty().withMessage("Category name is required").isLength({ max: 100 }).withMessage("Category name must be 100 characters or fewer"),
+  body("description").optional({ values: "falsy" }).trim().isLength({ max: 500 }).withMessage("Description must be 500 characters or fewer"),
+];
+const vendorCreateValidators = [
+  body("companyName").trim().notEmpty().withMessage("Company name is required").isLength({ max: 160 }).withMessage("Company name must be 160 characters or fewer"),
+  body("contactPerson").optional({ values: "falsy" }).trim().isLength({ max: 120 }).withMessage("Contact person must be 120 characters or fewer"),
+  body("email").trim().isEmail().withMessage("Valid email is required").normalizeEmail(),
+  body("phone").optional({ values: "falsy" }).trim().isLength({ max: 30 }).withMessage("Phone must be 30 characters or fewer"),
+  body("address").optional({ values: "falsy" }).trim().isLength({ max: 500 }).withMessage("Address must be 500 characters or fewer"),
+  body("gstNumber").optional({ values: "falsy" }).trim().isLength({ max: 40 }).withMessage("GST number must be 40 characters or fewer"),
+  body("password").optional().isLength({ min: 8, max: 128 }).withMessage("Password must be between 8 and 128 characters"),
+  body("categoryId").optional({ values: "falsy" }).isUUID().withMessage("Category is invalid"),
+  body("status").optional({ values: "falsy" }).isIn(vendorStatusValues).withMessage("Status is invalid"),
+  body("rating").optional({ values: "falsy" }).isFloat({ min: 0, max: 5 }).withMessage("Rating must be between 0 and 5"),
+];
+const vendorUpdateValidators = [
+  body("companyName").optional().trim().notEmpty().withMessage("Company name cannot be empty").isLength({ max: 160 }).withMessage("Company name must be 160 characters or fewer"),
+  body("contactPerson").optional({ values: "falsy" }).trim().isLength({ max: 120 }).withMessage("Contact person must be 120 characters or fewer"),
+  body("email").optional().trim().isEmail().withMessage("Valid email is required").normalizeEmail(),
+  body("phone").optional({ values: "falsy" }).trim().isLength({ max: 30 }).withMessage("Phone must be 30 characters or fewer"),
+  body("address").optional({ values: "falsy" }).trim().isLength({ max: 500 }).withMessage("Address must be 500 characters or fewer"),
+  body("gstNumber").optional({ values: "falsy" }).trim().isLength({ max: 40 }).withMessage("GST number must be 40 characters or fewer"),
+  body("categoryId").optional({ values: "falsy" }).isUUID().withMessage("Category is invalid"),
+  body("status").optional().isIn(vendorStatusValues).withMessage("Status is invalid"),
+  body("rating").optional({ values: "falsy" }).isFloat({ min: 0, max: 5 }).withMessage("Rating must be between 0 and 5"),
+];
 
 /**
  * @swagger
@@ -49,12 +95,12 @@ router.post("/auth/reset-password", ...handlers(body("token").notEmpty(), body("
  *     security: [{ bearerAuth: [] }]
  *     responses: { 201: { description: User created } }
  */
-router.route("/users").get(...handlers(...a("ADMIN"), master.listUsers)).post(...handlers(...a("ADMIN"), body("email").isEmail(), body("name").notEmpty(), body("password").isLength({ min: 8 }), body("role").isIn(["ADMIN", "PROCUREMENT_OFFICER", "FINANCE_OFFICER", "VENDOR"]), validate, master.createUser));
-router.route("/users/:id").get(...handlers(...a("ADMIN"), master.getUser)).put(...handlers(...a("ADMIN"), master.updateUser)).delete(...handlers(...a("ADMIN"), master.deleteUser));
-router.route("/vendor-categories").get(protect, asyncHandler(master.listCategories)).post(...handlers(...a("ADMIN"), body("name").notEmpty(), validate, master.createCategory));
-router.route("/vendor-categories/:id").get(protect, asyncHandler(master.getCategory)).put(...handlers(...a("ADMIN"), master.updateCategory)).delete(...handlers(...a("ADMIN"), master.deleteCategory));
-router.route("/vendors").get(...handlers(...a("ADMIN", "PROCUREMENT_OFFICER"), master.listVendors)).post(...handlers(...a("ADMIN"), body("companyName").notEmpty(), body("email").isEmail(), body("password").optional().isLength({ min: 8 }), validate, master.createVendor));
-router.route("/vendors/:id").get(...handlers(...a("ADMIN", "PROCUREMENT_OFFICER"), master.getVendor)).put(...handlers(...a("ADMIN"), master.updateVendor)).delete(...handlers(...a("ADMIN"), master.deleteVendor));
+router.route("/users").get(...handlers(...a("ADMIN"), master.listUsers)).post(...handlers(...a("ADMIN"), ...userCreateValidators, validate, master.createUser));
+router.route("/users/:id").get(...handlers(...a("ADMIN"), master.getUser)).put(...handlers(...a("ADMIN"), ...userUpdateValidators, validate, master.updateUser)).delete(...handlers(...a("ADMIN"), master.deleteUser));
+router.route("/vendor-categories").get(protect, asyncHandler(master.listCategories)).post(...handlers(...a("ADMIN"), ...categoryValidators, validate, master.createCategory));
+router.route("/vendor-categories/:id").get(protect, asyncHandler(master.getCategory)).put(...handlers(...a("ADMIN"), ...categoryValidators, validate, master.updateCategory)).delete(...handlers(...a("ADMIN"), master.deleteCategory));
+router.route("/vendors").get(...handlers(...a("ADMIN", "PROCUREMENT_OFFICER"), master.listVendors)).post(...handlers(...a("ADMIN"), ...vendorCreateValidators, validate, master.createVendor));
+router.route("/vendors/:id").get(...handlers(...a("ADMIN", "PROCUREMENT_OFFICER"), master.getVendor)).put(...handlers(...a("ADMIN"), ...vendorUpdateValidators, validate, master.updateVendor)).delete(...handlers(...a("ADMIN"), master.deleteVendor));
 
 /**
  * @swagger
