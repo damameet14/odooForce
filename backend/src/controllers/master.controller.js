@@ -8,7 +8,7 @@ const templates = require("../utils/emailTemplates");
 const pageArgs = (req) => ({ skip: Math.max(0, Number(req.query.page || 1) - 1) * Number(req.query.limit || 25), take: Math.min(100, Number(req.query.limit || 25)) });
 const userSelect = { id: true, name: true, email: true, phone: true, role: true, status: true, createdAt: true, updatedAt: true };
 
-exports.listUsers = async (req, res) => res.json(await prisma.user.findMany({ ...pageArgs(req), orderBy: { createdAt: "desc" }, select: userSelect }));
+exports.listUsers = async (req, res) => res.json(await prisma.user.findMany({ where: { role: { not: "VENDOR" } }, ...pageArgs(req), orderBy: { createdAt: "desc" }, select: userSelect }));
 exports.createUser = async (req, res) => {
   const { name, email, password, role, phone, status } = req.body;
   const user = await prisma.user.create({ data: { name, email: email.toLowerCase(), phone: phone || null, role, status: status || undefined, passwordHash: await bcrypt.hash(password, 12) } });
@@ -47,19 +47,28 @@ exports.deleteUser = async (req, res) => {
   res.json(user);
 };
 
-exports.listCategories = async (_req, res) => res.json(await prisma.vendorCategory.findMany({ orderBy: { name: "asc" }, include: { _count: { select: { vendors: true } } } }));
+exports.listCategories = async (_req, res) => res.json(await prisma.vendorCategory.findMany({ orderBy: { name: "asc" }, include: { _count: { select: { vendors: true, products: true } } } }));
 exports.createCategory = async (req, res) => {
-  const { name, description } = req.body;
-  res.status(201).json(await prisma.vendorCategory.create({ data: { name, description: description || null } }));
+  const { name, description, defaultGstPercent } = req.body;
+  if (defaultGstPercent !== undefined && (Number(defaultGstPercent) < 0 || Number(defaultGstPercent) > 100))
+    throw new ApiError(422, "GST percentage must be between 0 and 100");
+  res.status(201).json(await prisma.vendorCategory.create({ data: { name, description, defaultGstPercent: defaultGstPercent ?? 18 } }));
 };
-exports.getCategory = async (req, res) => res.json(await prisma.vendorCategory.findUniqueOrThrow({ where: { id: req.params.id } }));
+exports.getCategory = async (req, res) => res.json(await prisma.vendorCategory.findUniqueOrThrow({ where: { id: req.params.id }, include: { products: true, _count: { select: { vendors: true, products: true } } } }));
 exports.updateCategory = async (req, res) => {
-  const { name, description } = req.body;
-  res.json(await prisma.vendorCategory.update({ where: { id: req.params.id }, data: { name, description: description || null } }));
+  const { name, description, defaultGstPercent } = req.body;
+  if (defaultGstPercent !== undefined && (Number(defaultGstPercent) < 0 || Number(defaultGstPercent) > 100))
+    throw new ApiError(422, "GST percentage must be between 0 and 100");
+  const data = {
+    ...(name !== undefined && { name }),
+    ...(description !== undefined && { description }),
+    ...(defaultGstPercent !== undefined && { defaultGstPercent }),
+  };
+  res.json(await prisma.vendorCategory.update({ where: { id: req.params.id }, data }));
 };
 exports.deleteCategory = async (req, res) => {
-  const category = await prisma.vendorCategory.findUniqueOrThrow({ where: { id: req.params.id }, include: { _count: { select: { vendors: true } } } });
-  if (category._count.vendors) throw new ApiError(409, "Category is in use");
+  const category = await prisma.vendorCategory.findUniqueOrThrow({ where: { id: req.params.id }, include: { _count: { select: { vendors: true, products: true } } } });
+  if (category._count.vendors || category._count.products) throw new ApiError(409, "Category is in use by vendors or products");
   await prisma.vendorCategory.delete({ where: { id: category.id } });
   res.status(204).end();
 };

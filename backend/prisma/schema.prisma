@@ -26,6 +26,11 @@ enum VendorStatus {
   BLACKLISTED
 }
 
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+}
+
 enum RfqStatus {
   DRAFT
   SENT
@@ -69,6 +74,14 @@ enum PoStatus {
   DELIVERED
   COMPLETED
   CANCELLED
+}
+
+enum DeliveryStatus {
+  PENDING
+  SHIPPED
+  ON_THE_WAY
+  DELIVERED
+  RECEIVED
 }
 
 enum InvoiceStatus {
@@ -115,14 +128,32 @@ model User {
 }
 
 model VendorCategory {
-  id          String   @id @default(uuid()) @db.Uuid
-  name        String   @unique
-  description String?
-  vendors     Vendor[]
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id               String    @id @default(uuid()) @db.Uuid
+  name             String    @unique
+  description      String?
+  defaultGstPercent Decimal  @default(18) @map("default_gst_percent") @db.Decimal(5, 2)
+  vendors          Vendor[]
+  products         Product[]
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
 
   @@map("vendor_categories")
+}
+
+model Product {
+  id            String         @id @default(uuid()) @db.Uuid
+  name          String
+  description   String?
+  categoryId    String         @map("category_id") @db.Uuid
+  unit          String         @default("pieces")
+  defaultGstPct Decimal        @default(18) @map("default_gst_pct") @db.Decimal(5, 2)
+  status        ProductStatus  @default(ACTIVE)
+  category      VendorCategory @relation(fields: [categoryId], references: [id])
+  rfqItems      RfqItem[]
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  @@map("products")
 }
 
 model Vendor {
@@ -140,6 +171,7 @@ model Vendor {
   user           User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
   category       VendorCategory?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   invites        RfqVendorInvite[]
+  rfqItemVendors RfqItemVendor[]
   quotations     Quotation[]
   purchaseOrders PurchaseOrder[]
   invoices       Invoice[]
@@ -174,17 +206,34 @@ model Rfq {
 model RfqItem {
   id             String          @id @default(uuid()) @db.Uuid
   rfqId          String          @map("rfq_id") @db.Uuid
+  productId      String?         @map("product_id") @db.Uuid
   itemName       String          @map("item_name")
   description    String?
   quantity       Decimal         @db.Decimal(12, 2)
   unit           String
   specifications String?
+  deadline       DateTime?
   rfq            Rfq             @relation(fields: [rfqId], references: [id], onDelete: Cascade)
+  product        Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
+  itemVendors    RfqItemVendor[]
   quotationItems QuotationItem[]
   createdAt      DateTime        @default(now()) @map("created_at")
   updatedAt      DateTime        @updatedAt @map("updated_at")
 
   @@map("rfq_items")
+}
+
+model RfqItemVendor {
+  id        String       @id @default(uuid()) @db.Uuid
+  rfqItemId String       @map("rfq_item_id") @db.Uuid
+  vendorId  String       @map("vendor_id") @db.Uuid
+  status    InviteStatus @default(INVITED)
+  rfqItem   RfqItem      @relation(fields: [rfqItemId], references: [id], onDelete: Cascade)
+  vendor    Vendor       @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  @@unique([rfqItemId, vendorId])
+  @@map("rfq_item_vendors")
 }
 
 model RfqVendorInvite {
@@ -205,6 +254,7 @@ model Quotation {
   quotationNumber  String          @unique @map("quotation_number")
   rfqId            String          @map("rfq_id") @db.Uuid
   vendorId         String          @map("vendor_id") @db.Uuid
+  deliveryDays     Int?            @map("delivery_days")
   deliveryTimeline String?         @map("delivery_timeline")
   paymentTerms     String?         @map("payment_terms")
   notes            String?
@@ -232,6 +282,7 @@ model QuotationItem {
   rfqItemId     String    @map("rfq_item_id") @db.Uuid
   unitPrice     Decimal   @map("unit_price") @db.Decimal(12, 2)
   quantity      Decimal   @db.Decimal(12, 2)
+  gstPercent    Decimal   @default(18) @map("gst_percent") @db.Decimal(5, 2)
   taxPercentage Decimal   @default(0) @map("tax_percentage") @db.Decimal(5, 2)
   taxAmount     Decimal   @default(0) @map("tax_amount") @db.Decimal(12, 2)
   discount      Decimal   @default(0) @db.Decimal(12, 2)
@@ -245,13 +296,14 @@ model QuotationItem {
 model Approval {
   id                  String         @id @default(uuid()) @db.Uuid
   rfqId               String         @map("rfq_id") @db.Uuid
-  selectedQuotationId String         @map("selected_quotation_id") @db.Uuid
+  selectedQuotationId String?        @map("selected_quotation_id") @db.Uuid
+  selectedItems       Json?          @map("selected_items")
   requestedBy         String         @map("requested_by") @db.Uuid
   reviewedBy          String?        @map("reviewed_by") @db.Uuid
   status              ApprovalStatus @default(PENDING)
   remarks             String?
   rfq                 Rfq            @relation(fields: [rfqId], references: [id], onDelete: Cascade)
-  selectedQuotation   Quotation      @relation(fields: [selectedQuotationId], references: [id], onDelete: Cascade)
+  selectedQuotation   Quotation?     @relation(fields: [selectedQuotationId], references: [id], onDelete: Cascade)
   requester           User           @relation("ApprovalRequester", fields: [requestedBy], references: [id])
   reviewer            User?          @relation("ApprovalReviewer", fields: [reviewedBy], references: [id])
   createdAt           DateTime       @default(now()) @map("created_at")
@@ -264,17 +316,19 @@ model PurchaseOrder {
   id              String              @id @default(uuid()) @db.Uuid
   poNumber        String              @unique @map("po_number")
   rfqId           String              @map("rfq_id") @db.Uuid
-  quotationId     String              @map("quotation_id") @db.Uuid
+  quotationId     String?             @map("quotation_id") @db.Uuid
+  approvalId      String?             @map("approval_id") @db.Uuid
   vendorId        String              @map("vendor_id") @db.Uuid
   createdBy       String              @map("created_by") @db.Uuid
   status          PoStatus            @default(GENERATED)
+  deliveryStatus  DeliveryStatus      @default(PENDING) @map("delivery_status")
   subtotal        Decimal             @default(0) @db.Decimal(12, 2)
   taxAmount       Decimal             @default(0) @map("tax_amount") @db.Decimal(12, 2)
   discountAmount  Decimal             @default(0) @map("discount_amount") @db.Decimal(12, 2)
   grandTotal      Decimal             @default(0) @map("grand_total") @db.Decimal(12, 2)
   termsConditions String?             @map("terms_conditions")
   rfq             Rfq                 @relation(fields: [rfqId], references: [id])
-  quotation       Quotation           @relation(fields: [quotationId], references: [id])
+  quotation       Quotation?          @relation(fields: [quotationId], references: [id])
   vendor          Vendor              @relation(fields: [vendorId], references: [id])
   creator         User                @relation(fields: [createdBy], references: [id])
   items           PurchaseOrderItem[]
@@ -293,6 +347,7 @@ model PurchaseOrderItem {
   description     String?
   quantity        Decimal       @db.Decimal(12, 2)
   unitPrice       Decimal       @map("unit_price") @db.Decimal(12, 2)
+  gstPercent      Decimal       @default(18) @map("gst_percent") @db.Decimal(5, 2)
   taxAmount       Decimal       @default(0) @map("tax_amount") @db.Decimal(12, 2)
   totalAmount     Decimal       @map("total_amount") @db.Decimal(12, 2)
   purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
@@ -301,17 +356,17 @@ model PurchaseOrderItem {
 }
 
 model Delivery {
-  id              String        @id @default(uuid()) @db.Uuid
-  purchaseOrderId String        @unique @map("purchase_order_id") @db.Uuid
-  vendorId        String        @map("vendor_id") @db.Uuid
-  status          PoStatus      @default(GENERATED)
+  id              String         @id @default(uuid()) @db.Uuid
+  purchaseOrderId String         @unique @map("purchase_order_id") @db.Uuid
+  vendorId        String         @map("vendor_id") @db.Uuid
+  status          DeliveryStatus @default(PENDING)
   notes           String?
-  updatedBy       String        @map("updated_by") @db.Uuid
-  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
-  vendor          Vendor        @relation(fields: [vendorId], references: [id])
-  updater         User          @relation(fields: [updatedBy], references: [id])
-  createdAt       DateTime      @default(now()) @map("created_at")
-  updatedAt       DateTime      @updatedAt @map("updated_at")
+  updatedBy       String         @map("updated_by") @db.Uuid
+  purchaseOrder   PurchaseOrder  @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  vendor          Vendor         @relation(fields: [vendorId], references: [id])
+  updater         User           @relation(fields: [updatedBy], references: [id])
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
 
   @@map("deliveries")
 }
@@ -343,6 +398,7 @@ model InvoiceItem {
   itemName    String  @map("item_name")
   quantity    Decimal @db.Decimal(12, 2)
   unitPrice   Decimal @map("unit_price") @db.Decimal(12, 2)
+  gstPercent  Decimal @default(18) @map("gst_percent") @db.Decimal(5, 2)
   taxAmount   Decimal @default(0) @map("tax_amount") @db.Decimal(12, 2)
   totalAmount Decimal @map("total_amount") @db.Decimal(12, 2)
   invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
