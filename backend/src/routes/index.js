@@ -12,7 +12,7 @@ const report = require("../controllers/report.controller");
 const router = express.Router();
 const a = (...roles) => [protect, authorize(...roles)];
 const handlers = (...items) => items.map((item) => typeof item === "function" && item.constructor.name === "AsyncFunction" ? asyncHandler(item) : item);
-const roleValues = ["ADMIN", "PROCUREMENT_OFFICER", "FINANCE_OFFICER", "VENDOR"];
+const roleValues = ["ADMIN", "PROCUREMENT_OFFICER"];
 const userStatusValues = ["ACTIVE", "INACTIVE"];
 const vendorStatusValues = ["ACTIVE", "INACTIVE", "PENDING", "BLACKLISTED"];
 const userCreateValidators = [
@@ -20,7 +20,7 @@ const userCreateValidators = [
   body("email").trim().isEmail().withMessage("Valid email is required").normalizeEmail(),
   body("password").isLength({ min: 8, max: 128 }).withMessage("Password must be between 8 and 128 characters"),
   body("role").isIn(roleValues).withMessage("Role is invalid"),
-  body("phone").optional({ values: "falsy" }).trim().isLength({ max: 30 }).withMessage("Phone must be 30 characters or fewer"),
+  body("phone").trim().notEmpty().withMessage("Phone is required").matches(/^[0-9]{10}$/).withMessage("Phone must be a 10-digit number"),
   body("status").optional({ values: "falsy" }).isIn(userStatusValues).withMessage("Status is invalid"),
 ];
 const userUpdateValidators = [
@@ -28,7 +28,7 @@ const userUpdateValidators = [
   body("email").optional().trim().isEmail().withMessage("Valid email is required").normalizeEmail(),
   body("password").optional({ values: "falsy" }).isLength({ min: 8, max: 128 }).withMessage("Password must be between 8 and 128 characters"),
   body("role").optional().isIn(roleValues).withMessage("Role is invalid"),
-  body("phone").optional({ values: "falsy" }).trim().isLength({ max: 30 }).withMessage("Phone must be 30 characters or fewer"),
+  body("phone").trim().notEmpty().withMessage("Phone is required").matches(/^[0-9]{10}$/).withMessage("Phone must be a 10-digit number"),
   body("status").optional().isIn(userStatusValues).withMessage("Status is invalid"),
 ];
 const categoryValidators = [
