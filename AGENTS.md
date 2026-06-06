@@ -25,6 +25,7 @@ The system must preserve a reliable audit trail and strict data isolation betwee
       middlewares/         Authentication, authorization, validation, errors
       routes/              API routes and Swagger annotations
       services/            Reusable audit, email, notification, PDF, numbering logic
+      templates/           Optional reusable message or document templates
       utils/               Small shared backend utilities
   frontend/                React/Vite web application
     src/
@@ -146,6 +147,7 @@ Public signup may create only `VENDOR` users. Admin and internal officer account
 ## Security Requirements
 
 - Never commit `.env` files, database URLs, credentials, JWTs, SMTP passwords, logs, generated uploads, or private keys.
+- Never commit Brevo API keys or verified sender credentials.
 - Do not log access tokens, passwords, connection URLs, or sensitive request bodies.
 - Passwords must be hashed with bcrypt before persistence.
 - Password hashes must never appear in API responses.
@@ -155,6 +157,7 @@ Public signup may create only `VENDOR` users. Admin and internal officer account
 - Preserve Helmet and API/auth rate limiting.
 - Keep internal errors generic for clients.
 - Email errors must be captured in `email_logs` without exposing credentials.
+- Do not log password reset tokens, login passwords, Brevo API keys, provider response bodies, or full email payloads containing sensitive data.
 - Use provider-required TLS/SSL options for remote PostgreSQL.
 - Treat the seeded demo accounts and password as development-only data.
 - Run dependency audits before pushing dependency changes.
@@ -177,13 +180,12 @@ Optional or environment-dependent:
 - `NODE_ENV`
 - `JWT_EXPIRES_IN`
 - `TRUST_PROXY`
-- `EMAIL_HOST`
-- `EMAIL_PORT`
-- `EMAIL_USER`
-- `EMAIL_PASS`
+- `BREVO_API_KEY`
 - `EMAIL_FROM`
+- `EMAIL_FROM_NAME`
+- `CLIENT_URL`
 
-`EMAIL_USER` and `EMAIL_PASS` must be configured together.
+Email delivery uses the Brevo SDK through `backend/src/services/email.service.js`. `EMAIL_FROM` must be a Brevo-approved sender address, and `CLIENT_URL` is used for password reset links. Keep actual Brevo credentials in local or deployment environment variables only.
 
 Frontend configuration belongs in `frontend/.env` using the documented `VITE_API_URL`. Only variables prefixed with `VITE_` are exposed to the browser. Never place secrets in frontend environment variables.
 
@@ -251,6 +253,28 @@ At minimum, log:
 - Delivery status changes
 
 Descriptions should be understandable to an operator. Metadata must not contain passwords, tokens, or credentials.
+
+## Email Rules
+
+Use `sendEmail` from `backend/src/services/email.service.js` for all backend email delivery. Do not create feature-specific mail clients or reintroduce SMTP/Nodemailer transport unless explicitly approved.
+
+Email content should live in reusable templates under `backend/src/utils/` or `backend/src/templates/` when it is shared or user-facing. Templates must include both `html` and `text` content when practical.
+
+At minimum, preserve email support for:
+
+- User signup success
+- User login alert
+- Forgot password reset link
+- Password reset success
+- Account deletion or deactivation confirmation
+- Purchase order email delivery
+- Invoice email delivery
+
+Authentication emails that are informational, such as signup, login alert, password reset success, and account deletion confirmation, must not block the primary user action if Brevo delivery fails. Log safe failure context and rely on `email_logs`.
+
+Forgot-password email is delivery-dependent. If the reset email cannot be sent, return a generic clean error without exposing Brevo internals or whether the account exists.
+
+Password reset links must use `CLIENT_URL/reset-password/<token>` and reset tokens must never be written to logs, activity metadata, email logs, or API responses.
 
 ## Seed Data Rules
 
