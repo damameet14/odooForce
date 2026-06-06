@@ -167,6 +167,7 @@ router.route("/vendors/:id").get(...handlers(...a("ADMIN", "PROCUREMENT_OFFICER"
 
 // ─── Password Reset Requests ────────────────────────────────────────────────
 
+router.post("/password-reset-requests/public", ...handlers(body("email").isEmail().withMessage("Valid email is required"), validate, master.createPublicResetRequest));
 router.post("/password-reset-requests", protect, asyncHandler(master.createResetRequest));
 router.get("/password-reset-requests", ...handlers(...a("ADMIN"), master.listResetRequests));
 router.put("/password-reset-requests/:id", ...handlers(...a("ADMIN"), body("action").isIn(["approve", "reject"]).withMessage("Action must be approve or reject"), validate, master.resolveResetRequest));

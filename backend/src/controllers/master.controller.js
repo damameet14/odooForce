@@ -136,6 +136,22 @@ exports.createResetRequest = async (req, res) => {
   res.status(201).json(request);
 };
 
+exports.createPublicResetRequest = async (req, res) => {
+  const { email } = req.body;
+  // Always return success to avoid leaking whether the email exists
+  const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+  if (!user) return res.json({ message: "If an account with that email exists, a reset request has been submitted." });
+  const existing = await prisma.passwordResetRequest.findFirst({ where: { userId: user.id, status: "PENDING" } });
+  if (existing) return res.json({ message: "If an account with that email exists, a reset request has been submitted." });
+  await prisma.passwordResetRequest.create({ data: { userId: user.id, message: "Requested via forgot password on login page" } });
+  const admins = await prisma.user.findMany({ where: { role: "ADMIN", status: "ACTIVE" } });
+  for (const admin of admins) {
+    await notify({ userId: admin.id, title: "Password Reset Request", message: `${user.name} (${user.email}) has requested a password reset from the login page.`, entityType: "USER", entityId: user.id });
+  }
+  await logActivity({ userId: user.id, action: "PASSWORD_RESET_REQUESTED", entityType: "USER", entityId: user.id, description: `${user.name} requested a password reset from the login page` });
+  res.json({ message: "If an account with that email exists, a reset request has been submitted." });
+};
+
 exports.listResetRequests = async (req, res) => {
   const where = req.query.status ? { status: req.query.status } : {};
   res.json(await prisma.passwordResetRequest.findMany({ where, orderBy: { createdAt: "desc" }, include: { user: { select: userSelect } } }));
@@ -152,8 +168,9 @@ exports.resolveResetRequest = async (req, res) => {
     return res.json(updated);
   }
 
-  // Generate new password, hash it, update user, email them
-  const newPassword = generatePassword();
+  // Use admin-provided password or generate one
+  const newPassword = req.body.password || generatePassword();
+  if (req.body.password && req.body.password.length < 8) throw new ApiError(422, "Password must be at least 8 characters");
   await prisma.$transaction(async (tx) => {
     await tx.user.update({ where: { id: request.userId }, data: { passwordHash: await bcrypt.hash(newPassword, 12) } });
     await tx.passwordResetRequest.update({ where: { id: request.id }, data: { status: "COMPLETED", resolvedAt: new Date() } });
