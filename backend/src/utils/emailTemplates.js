@@ -93,6 +93,39 @@ exports.accountDeletedEmail = (user) =>
     ],
   });
 
+exports.welcomeWithCredentialsEmail = (user, password, role) => ({
+  subject: `Welcome to ${appName} — Your login credentials`,
+  text: `Hi ${user.name},\n\nYour ${appName} account has been created.\n\nRole: ${role}\nEmail: ${user.email}\nPassword: ${password}\n\nPlease login at your earliest convenience and keep your credentials secure.\n\nRegards,\n${appName} Admin`,
+  html: wrapper(`
+    <h2 style="margin:0 0 16px;color:#14292b;font-size:20px">Welcome to ${appName}</h2>
+    <p style="margin:0 0 12px">Hi <strong>${escapeHtml(user.name)}</strong>,</p>
+    <p style="margin:0 0 16px">Your account has been created. Use the credentials below to log in:</p>
+    <table cellpadding="0" cellspacing="0" style="border:1px solid #dfe7e6;border-radius:6px;overflow:hidden;margin:0 0 16px;width:100%">
+      <tr style="background:#f7f9f9"><td style="padding:10px 14px;font-size:11px;color:#637775;font-weight:700;width:100px">Role</td><td style="padding:10px 14px;font-size:13px;color:#14292b">${escapeHtml(role)}</td></tr>
+      <tr><td style="padding:10px 14px;font-size:11px;color:#637775;font-weight:700;border-top:1px solid #e8eeee">Email</td><td style="padding:10px 14px;font-size:13px;color:#14292b;border-top:1px solid #e8eeee">${escapeHtml(user.email)}</td></tr>
+      <tr style="background:#f7f9f9"><td style="padding:10px 14px;font-size:11px;color:#637775;font-weight:700;border-top:1px solid #e8eeee">Password</td><td style="padding:10px 14px;font-size:13px;color:#14292b;font-family:monospace;letter-spacing:1px;border-top:1px solid #e8eeee"><strong>${escapeHtml(password)}</strong></td></tr>
+    </table>
+    <p style="margin:0 0 12px;color:#748582;font-size:11px">⚠️ Please keep your credentials secure and do not share them.</p>
+    <p style="margin:0;color:#748582;font-size:11px">— ${appName} Admin</p>
+  `),
+});
+
+exports.passwordResetByAdminEmail = (user, newPassword) => ({
+  subject: `${appName} — Your password has been reset`,
+  text: `Hi ${user.name},\n\nYour password has been reset by the administrator.\n\nEmail: ${user.email}\nNew Password: ${newPassword}\n\nPlease login and keep your new credentials secure.\n\nRegards,\n${appName} Admin`,
+  html: wrapper(`
+    <h2 style="margin:0 0 16px;color:#14292b;font-size:20px">Password Reset</h2>
+    <p style="margin:0 0 12px">Hi <strong>${escapeHtml(user.name)}</strong>,</p>
+    <p style="margin:0 0 16px">Your password has been reset by the administrator. Use the new credentials below:</p>
+    <table cellpadding="0" cellspacing="0" style="border:1px solid #dfe7e6;border-radius:6px;overflow:hidden;margin:0 0 16px;width:100%">
+      <tr style="background:#f7f9f9"><td style="padding:10px 14px;font-size:11px;color:#637775;font-weight:700;width:100px">Email</td><td style="padding:10px 14px;font-size:13px;color:#14292b">${escapeHtml(user.email)}</td></tr>
+      <tr><td style="padding:10px 14px;font-size:11px;color:#637775;font-weight:700;border-top:1px solid #e8eeee">New Password</td><td style="padding:10px 14px;font-size:13px;color:#14292b;font-family:monospace;letter-spacing:1px;border-top:1px solid #e8eeee"><strong>${escapeHtml(newPassword)}</strong></td></tr>
+    </table>
+    <p style="margin:0 0 12px;color:#748582;font-size:11px">⚠️ Please change your password after logging in.</p>
+    <p style="margin:0;color:#748582;font-size:11px">— ${appName} Admin</p>
+  `),
+});
+
 // ─── RFQ Invite Email (Vendor receives) ─────────────────────────────────────
 
 exports.rfqInviteEmail = (rfq, vendorItems, vendor) => {

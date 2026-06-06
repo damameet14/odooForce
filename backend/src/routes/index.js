@@ -165,6 +165,12 @@ router.route("/vendor-categories/:id").get(protect, asyncHandler(master.getCateg
 router.route("/vendors").get(...handlers(...a("ADMIN", "PROCUREMENT_OFFICER"), master.listVendors)).post(...handlers(...a("ADMIN"), ...vendorCreateValidators, validate, master.createVendor));
 router.route("/vendors/:id").get(...handlers(...a("ADMIN", "PROCUREMENT_OFFICER"), master.getVendor)).put(...handlers(...a("ADMIN"), ...vendorUpdateValidators, validate, master.updateVendor)).delete(...handlers(...a("ADMIN"), master.deleteVendor));
 
+// ─── Password Reset Requests ────────────────────────────────────────────────
+
+router.post("/password-reset-requests", protect, asyncHandler(master.createResetRequest));
+router.get("/password-reset-requests", ...handlers(...a("ADMIN"), master.listResetRequests));
+router.put("/password-reset-requests/:id", ...handlers(...a("ADMIN"), body("action").isIn(["approve", "reject"]).withMessage("Action must be approve or reject"), validate, master.resolveResetRequest));
+
 // ─── Products ───────────────────────────────────────────────────────────────
 
 /**

@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { Navigate, Route, Routes, NavLink, useLocation, useNavigate, useParams } from "react-router-dom";
-import { BarChart3, Bell, Box, Building2, Check, ChevronRight, CircleDollarSign, ClipboardCheck, FileText, LayoutDashboard, LogOut, Menu, PackageCheck, Plus, Search, Send, ShoppingCart, Sparkles, Tag, Trash2, Truck, Users, X, Zap } from "lucide-react";
+import { BarChart3, Bell, Box, Building2, Check, ChevronRight, CircleDollarSign, ClipboardCheck, FileText, KeyRound, LayoutDashboard, LogOut, Menu, PackageCheck, Plus, Search, Send, ShoppingCart, Sparkles, Tag, Trash2, Truck, Users, X, Zap } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 import api from "./api/client";
@@ -41,7 +41,7 @@ async function action(method, path, payload, done) {
 // ─── Sidebar Menu ───────────────────────────────────────────────────────────
 
 const menu = {
-  ADMIN: [[LayoutDashboard, "Dashboard", "/dashboard"], [Users, "Users", "/users"], [Building2, "Vendors", "/vendors"], [Box, "Products", "/products"], [Tag, "Categories", "/vendor-categories"], [ShoppingCart, "RFQs", "/rfqs"], [PackageCheck, "Purchase orders", "/purchase-orders"], [FileText, "Invoices", "/invoices"], [BarChart3, "Reports", "/reports"], [ClipboardCheck, "Activity logs", "/activity-logs"]],
+  ADMIN: [[LayoutDashboard, "Dashboard", "/dashboard"], [Users, "Employees", "/users"], [Building2, "Vendors", "/vendors"], [Box, "Products", "/products"], [Tag, "Categories", "/vendor-categories"], [KeyRound, "Reset Requests", "/requests"], [ShoppingCart, "RFQs", "/rfqs"], [PackageCheck, "Purchase orders", "/purchase-orders"], [FileText, "Invoices", "/invoices"], [BarChart3, "Reports", "/reports"], [ClipboardCheck, "Activity logs", "/activity-logs"]],
   PROCUREMENT_OFFICER: [[LayoutDashboard, "Dashboard", "/dashboard"], [ShoppingCart, "RFQs", "/rfqs"], [ClipboardCheck, "Approvals", "/approvals"], [PackageCheck, "Purchase orders", "/purchase-orders"], [FileText, "Invoices", "/invoices"], [ClipboardCheck, "Activity logs", "/activity-logs"]],
   FINANCE_OFFICER: [[LayoutDashboard, "Dashboard", "/dashboard"], [ClipboardCheck, "Approvals", "/approvals"], [PackageCheck, "Purchase orders", "/purchase-orders"], [FileText, "Invoices", "/invoices"], [BarChart3, "Reports", "/reports"]],
   VENDOR: [[LayoutDashboard, "Dashboard", "/dashboard"], [ShoppingCart, "Assigned RFQs", "/rfqs"], [PackageCheck, "Purchase orders", "/purchase-orders"], [FileText, "Invoices", "/invoices"]],
@@ -54,6 +54,7 @@ function Shell() {
       <div className="brand"><span>VB</span><div><strong>VendorBridge</strong><small>Procurement ERP</small></div><button className="mobile-close" onClick={() => setOpen(false)}><X size={18} /></button></div>
       <nav>{menu[user.role].map(([Icon, label, path]) => <NavLink to={path} key={path} onClick={() => setOpen(false)} className={({ isActive }) => isActive || location.pathname.startsWith(`${path}/`) ? "active" : ""}><Icon size={17} />{label}<ChevronRight size={14} /></NavLink>)}</nav>
       <div className="side-user"><div className="avatar">{user.name.slice(0, 2).toUpperCase()}</div><div><strong>{user.name}</strong><small>{roles[user.role]}</small></div><button title="Log out" onClick={logout}><LogOut size={17} /></button></div>
+      <button className="button secondary" style={{ margin: "0 14px 14px", width: "calc(100% - 28px)", fontSize: 11 }} onClick={() => { action("post", "/password-reset-requests", { message: "Please reset my password" }); toast.success("Password reset request sent to admin"); }}><KeyRound size={14} /> Request Password Reset</button>
     </aside>
     <main><header><button className="menu-button" onClick={() => setOpen(true)}><Menu size={20} /></button><div className="context">Workspace <ChevronRight size={13} /> <strong>{roles[user.role]}</strong></div><NavLink to="/notifications" className="icon-button"><Bell size={18} /></NavLink></header><div className="content"><AppRoutes /></div></main>
   </div>;
@@ -362,6 +363,15 @@ function Reports() {
 function Activity() { const { data, error } = useList("/activity-logs"); return <><PageTitle title="Activity Logs" subtitle="Audit trail for major procurement actions." /><ErrorBox error={error} /><Table headers={["Action", "Description", "User", "Entity", "Time"]} empty={!data.length}>{data.map((l) => <tr key={l.id}><td className="mono">{l.action}</td><td>{l.description}</td><td>{l.user?.name || "System"}</td><td>{titleCase(l.entityType)}</td><td>{date(l.createdAt)}</td></tr>)}</Table></>; }
 function Notifications() { const { data, error, reload } = useList("/notifications"); return <><PageTitle title="Notifications" subtitle="Updates relevant to your role and workflow." action={<Button secondary onClick={() => action("put", "/notifications/read-all", {}, reload)}>Mark all read</Button>} /><ErrorBox error={error} /><div className="notifications">{data.map((n) => <button className={n.isRead ? "" : "unread"} key={n.id} onClick={() => action("put", `/notifications/${n.id}/read`, {}, reload)}><Bell size={17} /><div><strong>{n.title}</strong><p>{n.message}</p><small>{date(n.createdAt)}</small></div></button>)}</div>{!data.length && <Empty />}</>; }
 
+// ─── Reset Requests (Admin) ─────────────────────────────────────────────────
+
+function ResetRequests() {
+  const { data, error, reload } = useList("/password-reset-requests");
+  const pending = data.filter((r) => r.status === "PENDING");
+  const resolved = data.filter((r) => r.status !== "PENDING");
+  return <><PageTitle title="Password Reset Requests" subtitle="Review and resolve user password reset requests." /><ErrorBox error={error} />{pending.length > 0 && <section className="panel" style={{ marginBottom: 16 }}><h2 style={{ marginBottom: 12 }}>Pending Requests ({pending.length})</h2>{pending.map((r) => <div key={r.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid #e7edec" }}><div><strong>{r.user?.name}</strong><small style={{ display: "block", color: "#748582", fontSize: 11 }}>{r.user?.email} · {roles[r.user?.role]} · {date(r.createdAt)}</small>{r.message && <small style={{ display: "block", color: "#536765", marginTop: 4, fontStyle: "italic" }}>"{r.message}"</small>}</div><div className="actions"><Button onClick={() => action("put", `/password-reset-requests/${r.id}`, { action: "approve" }, reload)}>Reset & Email</Button><Button secondary danger onClick={() => action("put", `/password-reset-requests/${r.id}`, { action: "reject" }, reload)}>Reject</Button></div></div>)}</section>}{resolved.length > 0 && <Table headers={["User", "Status", "Requested", "Resolved"]} empty={false}>{resolved.map((r) => <tr key={r.id}><td><strong>{r.user?.name}</strong><small>{r.user?.email}</small></td><td><Status value={r.status} /></td><td>{date(r.createdAt)}</td><td>{r.resolvedAt ? date(r.resolvedAt) : "-"}</td></tr>)}</Table>}{!data.length && <Empty />}</>;
+}
+
 // ─── Routes ─────────────────────────────────────────────────────────────────
 
 function AppRoutes() {
@@ -380,6 +390,7 @@ function AppRoutes() {
     <Route path="/invoices" element={<Invoices />} />
     <Route path="/vendors" element={<Vendors />} />
     <Route path="/users" element={<EmployeesPage />} />
+    <Route path="/requests" element={user.role === "ADMIN" ? <ResetRequests /> : <Navigate to="/dashboard" />} />
     <Route path="/products" element={<Products />} />
     <Route path="/vendor-categories" element={<VendorCategories />} />
     <Route path="/reports" element={<Reports />} />
